@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 根据新格式查找对应年级的数据
             const gradeData = data.find(item => item.grade === currentGrade);
             
-            if (currentGrade && currentGrade.characters) {
+            if (gradeData && gradeData.characters) {
                 // 将数据格式转换为内部使用的格式
-                charactersData = currentGrade.characters.map(item => ({
+                charactersData = gradeData.characters.map(item => ({
                     character: item.word,
                     pinyin: item.pinyin,
                     wordGroups: item.words,
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 获取演示数据（作为后备）
-    /**function getDemoData() {
+    function getDemoData() {
         return [
             {character: "天", pinyin: "tiān", wordGroups: ["天空", "今天"], sentence: "蓝蓝的天空像大海。"},
             {character: "地", pinyin: "dì", wordGroups: ["大地", "土地"], sentence: "大地妈妈真温暖。"},
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {character: "你", pinyin: "nǐ", wordGroups: ["你好", "你们"], sentence: "你们好，新同学！"},
             {character: "我", pinyin: "wǒ", wordGroups: ["我们", "自我"], sentence: "我们是一年级学生。"}
         ];
-    }**/
+    }
     
     // 加载学习进度
     function loadLearningProgress() {
