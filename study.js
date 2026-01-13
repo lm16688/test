@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let learnedCharacters = [];
     let reviewCharacters = [];
     let masteredCharacters = [];
+
+    // 导入data.json
+import data from './data.json' assert { type: 'json' };
+console.log(data);
     
     // 初始化
     async function init() {
