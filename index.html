@@ -3,539 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小学语文生字学习网站</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background-color: #f0f8ff;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* 首页样式 */
-        .homepage {
-            text-align: center;
-        }
-
-        .qr-section {
-            margin-bottom: 40px;
-        }
-
-        .qr-section h1 {
-            color: #ff6b6b;
-            margin-bottom: 20px;
-            font-size: 28px;
-        }
-
-        .qr-images {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .qr-images img {
-            width: 150px;
-            height: 150px;
-            border: 3px solid #4ecdc4;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .grade-selection {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-
-        .grade-selection h2 {
-            color: #45b7d1;
-            margin-bottom: 30px;
-            font-size: 24px;
-        }
-
-        .grade-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .grade-item {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .grade-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-
-        .grade-item h3 {
-            margin-bottom: 10px;
-        }
-
-        .semester-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .semester-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid white;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .semester-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* 学习页面样式 */
-        .learning-page {
-            display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-
-        .learning-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .learning-header h2 {
-            color: #45b7d1;
-            margin-bottom: 10px;
-        }
-
-        .progress-bar {
-            background: #e0e0e0;
-            height: 10px;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .progress-fill {
-            background: linear-gradient(90deg, #4ecdc4, #44a08d);
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .learning-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: start;
-        }
-
-        .character-section {
-            text-align: center;
-        }
-
-        .character-display {
-            font-size: 120px;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .audio-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .audio-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .character-info {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 10px;
-            border-left: 5px solid #4ecdc4;
-        }
-
-        .info-item {
-            margin-bottom: 20px;
-        }
-
-        .info-item h4 {
-            color: #45b7d1;
-            margin-bottom: 8px;
-            font-size: 18px;
-        }
-
-        .info-item p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #555;
-        }
-
-        .navigation-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .nav-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .nav-btn:hover {
-            transform: scale(1.05);
-        }
-
-        .nav-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .back-btn {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-        }
-
-        /* 艾宾浩斯复习提醒 */
-        .review-reminder {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            text-align: center;
-            color: #856404;
-        }
-    </style>
+    <title>小学语文生字学习</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <!-- 首页 -->
-        <div class="homepage" id="homepage">
-            <div class="qr-section">
+        <header class="header">
+            <div class="social-qr">
                 <h1>关注女侠，解锁更多陪娃技巧！</h1>
-                <div class="qr-images">
-                    <img src="wechat.jpg" alt="微信二维码">
-                    <img src="xiaohongshu.jpg" alt="小红书二维码">
-                    <img src="douyin.jpg" alt="抖音二维码">
+                <div class="qr-codes">
+                    <div class="qr-item">
+                        <img src="wechat.jpg" alt="微信公众号">
+                        <p>微信公众号</p>
+                    </div>
+                    <div class="qr-item">
+                        <img src="xiaohongshu.jpg" alt="小红书">
+                        <p>小红书</p>
+                    </div>
+                    <div class="qr-item">
+                        <img src="douyin.jpg" alt="抖音">
+                        <p>抖音</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-content">
+            <div class="welcome-section">
+                <h2>小学语文生字学习系统</h2>
+                <p class="subtitle">采用艾宾浩斯记忆法，科学记忆生字词</p>
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-brain"></i>
+                        <h3>科学记忆</h3>
+                        <p>基于艾宾浩斯遗忘曲线，优化复习间隔</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-volume-up"></i>
+                        <h3>语音朗读</h3>
+                        <p>标准普通话发音，帮助正确学习</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-book-open"></i>
+                        <h3>分级学习</h3>
+                        <p>按年级和上下册分类，循序渐进</p>
+                    </div>
                 </div>
             </div>
             
             <div class="grade-selection">
-                <h2>选择年级开始学习</h2>
-                <div class="grade-grid">
-                    <div class="grade-item">
+                <h2>请选择年级</h2>
+                <div class="grade-buttons">
+                    <div class="grade-group">
                         <h3>一年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('一年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('一年级', '下册')">下册</button>
-                        </div>
+                        <button class="grade-btn" onclick="selectGrade('一年级上册')">一年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('一年级下册')">一年级下册</button>
                     </div>
-                    <div class="grade-item">
+                    <div class="grade-group">
                         <h3>二年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('二年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('二年级', '下册')">下册</button>
-                        </div>
+                        <button class="grade-btn" onclick="selectGrade('二年级上册')">二年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('二年级下册')">二年级下册</button>
                     </div>
-                    <div class="grade-item">
+                    <div class="grade-group">
                         <h3>三年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('三年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('三年级', '下册')">下册</button>
-                        </div>
+                        <button class="grade-btn" onclick="selectGrade('三年级上册')">三年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('三年级下册')">三年级下册</button>
                     </div>
-                    <div class="grade-item">
+                    <div class="grade-group">
                         <h3>四年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('四年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('四年级', '下册')">下册</button>
-                        </div>
-                    </div>
-                    <div class="grade-item">
-                        <h3>五年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('五年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('五年级', '下册')">下册</button>
-                        </div>
-                    </div>
-                    <div class="grade-item">
-                        <h3>六年级</h3>
-                        <div class="semester-buttons">
-                            <button class="semester-btn" onclick="startLearning('六年级', '上册')">上册</button>
-                            <button class="semester-btn" onclick="startLearning('六年级', '下册')">下册</button>
-                        </div>
+                        <button class="grade-btn" onclick="selectGrade('四年级上册')">四年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('四年级下册')">四年级下册</button>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- 学习页面 -->
-        <div class="learning-page" id="learningPage">
-            <div class="learning-header">
-                <h2 id="learningTitle">生字学习</h2>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <p>进度: <span id="progressText">0/0</span></p>
-            </div>
-
-            <div class="learning-content">
-                <div class="character-section">
-                    <div class="character-display" id="characterDisplay">字</div>
-                    <button class="audio-btn" onclick="playAudio()">🔊 朗读</button>
-                </div>
-
-                <div class="character-info">
-                    <div class="info-item">
-                        <h4>拼音</h4>
-                        <p id="pinyinDisplay">pīn yīn</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>组词</h4>
-                        <p id="wordsDisplay">组词示例</p>
-                    </div>
-                    <div class="info-item">
-                        <h4>例句</h4>
-                        <p id="sentenceDisplay">例句示例</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="navigation-buttons">
-                <button class="nav-btn back-btn" onclick="backToHome()">返回首页</button>
-                <button class="nav-btn" id="prevBtn" onclick="previousCharacter()">上一个</button>
-                <button class="nav-btn" id="nextBtn" onclick="nextCharacter()">下一个</button>
-            </div>
-
-            <div class="review-reminder" id="reviewReminder" style="display: none;">
-                <p>🎯 根据艾宾浩斯记忆法，建议您在 <span id="reviewTime"></span> 后复习这个字</p>
-            </div>
-        </div>
+        </main>
+        
+        <footer class="footer">
+            <p>© 2023 小学语文生字学习系统 | 采用艾宾浩斯记忆法</p>
+            <p class="hint">提示：学习前请确保已连接网络，以便使用语音朗读功能</p>
+        </footer>
     </div>
-
+    
     <script>
-        // 模拟生字数据（实际应用中应从小学语文生字表.docx读取）
-        const charactersData = {
-            '一年级': {
-                '上册': [
-                    { char: '人', pinyin: 'rén', words: '大人、人民、人们', sentence: '我的爸爸是个大人。' },
-                    { char: '手', pinyin: 'shǒu', words: '小手、手机、手指', sentence: '我用小手写字。' },
-                    { char: '口', pinyin: 'kǒu', words: '口水、口罩、口袋', sentence: '妈妈给我买了新口罩。' },
-                    { char: '日', pinyin: 'rì', words: '日月、日期、日记', sentence: '我每天都写日记。' },
-                    { char: '月', pinyin: 'yuè', words: '月亮、月份、月球', sentence: '夜晚的月亮真圆。' }
-                ],
-                '下册': [
-                    { char: '花', pinyin: 'huā', words: '花朵、花园、鲜花', sentence: '花园里有很多花朵。' },
-                    { char: '草', pinyin: 'cǎo', words: '小草、草地、草原', sentence: '小草从土里钻出来了。' },
-                    { char: '树', pinyin: 'shù', words: '大树、树叶、树木', sentence: '大树下很凉快。' },
-                    { char: '鸟', pinyin: 'niǎo', words: '小鸟、鸟儿、鸟巢', sentence: '小鸟在树上唱歌。' },
-                    { char: '鱼', pinyin: 'yú', words: '小鱼、鱼儿、金鱼', sentence: '小鱼在水里游来游去。' }
-                ]
-            },
-            '二年级': {
-                '上册': [
-                    { char: '学', pinyin: 'xué', words: '学生、学习、学校', sentence: '我是一名小学生。' },
-                    { char: '校', pinyin: 'xiào', words: '校园、校长、校友', sentence: '我们的校园很美丽。' },
-                    { char: '老', pinyin: 'lǎo', words: '老师、老人、老板', sentence: '我的语文老师很温柔。' },
-                    { char: '师', pinyin: 'shī', words: '教师、师傅、师父', sentence: '师傅教我做手工。' },
-                    { char: '朋', pinyin: 'péng', words: '朋友、亲朋好友', sentence: '我和朋友一起玩耍。' }
-                ],
-                '下册': [
-                    { char: '春', pinyin: 'chūn', words: '春天、春节、春风', sentence: '春天来了，花儿开了。' },
-                    { char: '夏', pinyin: 'xià', words: '夏天、夏季、夏日', sentence: '夏天很热，我喜欢吃冰淇淋。' },
-                    { char: '秋', pinyin: 'qiū', words: '秋天、秋季、秋风', sentence: '秋天是收获的季节。' },
-                    { char: '冬', pinyin: 'dōng', words: '冬天、冬季、冬瓜', sentence: '冬天会下雪，很好玩。' },
-                    { char: '雨', pinyin: 'yǔ', words: '下雨、雨水、雨伞', sentence: '今天下雨了，我打着雨伞上学。' }
-                ]
-            }
-        };
-
-        let currentGrade = '';
-        let currentSemester = '';
-        let currentCharacters = [];
-        let currentIndex = 0;
-        let reviewSchedule = {};
-
-        // 开始学习
-        function startLearning(grade, semester) {
-            currentGrade = grade;
-            currentSemester = semester;
-            currentCharacters = charactersData[grade]?.[semester] || [];
-            currentIndex = 0;
-            
-            document.getElementById('homepage').style.display = 'none';
-            document.getElementById('learningPage').style.display = 'block';
-            document.getElementById('learningTitle').textContent = `${grade}${semester} - 生字学习`;
-            
-            if (currentCharacters.length > 0) {
-                displayCharacter();
-                updateProgress();
-            }
+        function selectGrade(grade) {
+            // 保存选择的年级到localStorage，并跳转到学习页面
+            localStorage.setItem('selectedGrade', grade);
+            window.location.href = 'study.html';
         }
-
-        // 显示当前生字
-        function displayCharacter() {
-            if (currentCharacters.length === 0) return;
-            
-            const character = currentCharacters[currentIndex];
-            document.getElementById('characterDisplay').textContent = character.char;
-            document.getElementById('pinyinDisplay').textContent = character.pinyin;
-            document.getElementById('wordsDisplay').textContent = character.words;
-            document.getElementById('sentenceDisplay').textContent = character.sentence;
-            
-            // 更新按钮状态
-            document.getElementById('prevBtn').disabled = currentIndex === 0;
-            document.getElementById('nextBtn').disabled = currentIndex === currentCharacters.length - 1;
-            
-            // 显示复习提醒
-            showReviewReminder();
-        }
-
-        // 更新进度
-        function updateProgress() {
-            const progress = ((currentIndex + 1) / currentCharacters.length) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = `${currentIndex + 1}/${currentCharacters.length}`;
-        }
-
-        // 播放在线朗读
-        function playAudio() {
-            if (currentCharacters.length === 0) return;
-            
-            const character = currentCharacters[currentIndex];
-            const utterance = new SpeechSynthesisUtterance(character.char);
-            utterance.lang = 'zh-CN';
-            utterance.rate = 0.8;
-            speechSynthesis.speak(utterance);
-        }
-
-        // 下一个生字
-        function nextCharacter() {
-            if (currentIndex < currentCharacters.length - 1) {
-                currentIndex++;
-                displayCharacter();
-                updateProgress();
-            }
-        }
-
-        // 上一个生字
-        function previousCharacter() {
-            if (currentIndex > 0) {
-                currentIndex--;
-                displayCharacter();
-                updateProgress();
-            }
-        }
-
-        // 返回首页
-        function backToHome() {
-            document.getElementById('learningPage').style.display = 'none';
-            document.getElementById('homepage').style.display = 'block';
-        }
-
-        // 艾宾浩斯复习提醒
-        function showReviewReminder() {
-            if (currentCharacters.length === 0) return;
-            
-            const character = currentCharacters[currentIndex];
-            const now = new Date();
-            const reviewIntervals = [5, 30, 120, 360, 1440]; // 分钟：5分钟后、30分钟后、2小时后、6小时后、24小时后
-            
-            if (!reviewSchedule[character.char]) {
-                reviewSchedule[character.char] = {
-                    firstSeen: now,
-                    reviewCount: 0
+        
+        // 如果用户没有图片，显示占位符
+        window.onload = function() {
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                img.onerror = function() {
+                    this.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iI2UzZTNlMyIvPjx0ZXh0IHg9IjYwIiB5PSI2MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+UTE8L3RleHQ+PC9zdmc+';
+                    this.alt = '二维码图片缺失';
                 };
-            }
-            
-            const schedule = reviewSchedule[character.char];
-            const nextReviewIndex = schedule.reviewCount;
-            
-            if (nextReviewIndex < reviewIntervals.length) {
-                const nextReviewTime = new Date(now.getTime() + reviewIntervals[nextReviewIndex] * 60000);
-                const timeString = formatReviewTime(nextReviewTime);
-                document.getElementById('reviewTime').textContent = timeString;
-                document.getElementById('reviewReminder').style.display = 'block';
-                
-                // 模拟复习记录（实际应用中应保存到本地存储）
-                schedule.reviewCount++;
-            } else {
-                document.getElementById('reviewReminder').style.display = 'none';
-            }
-        }
-
-        // 格式化复习时间
-        function formatReviewTime(date) {
-            const now = new Date();
-            const diff = date - now;
-            const minutes = Math.floor(diff / 60000);
-            
-            if (minutes < 60) {
-                return `${minutes}分钟`;
-            } else if (minutes < 1440) {
-                const hours = Math.floor(minutes / 60);
-                return `${hours}小时`;
-            } else {
-                const days = Math.floor(minutes / 1440);
-                return `${days}天`;
-            }
-        }
-
-        // 键盘导航支持
-        document.addEventListener('keydown', function(event) {
-            if (document.getElementById('learningPage').style.display === 'block') {
-                switch(event.key) {
-                    case 'ArrowLeft':
-                        previousCharacter();
-                        break;
-                    case 'ArrowRight':
-                        nextCharacter();
-                        break;
-                    case ' ':
-                        event.preventDefault();
-                        playAudio();
-                        break;
-                }
-            }
-        });
+            });
+        };
     </script>
 </body>
 </html>

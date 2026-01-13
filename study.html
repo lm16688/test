@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生字学习</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container study-container">
+        <header class="study-header">
+            <div class="back-home">
+                <a href="index.html"><i class="fas fa-home"></i> 返回首页</a>
+            </div>
+            <h1 id="grade-title">生字学习</h1>
+            <div class="study-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <span id="progress-text">0/0</span>
+            </div>
+        </header>
+        
+        <main class="study-main">
+            <div class="character-section">
+                <div class="character-display">
+                    <div class="character-card" id="character-card">
+                        <div class="character" id="character">天</div>
+                        <button class="speak-btn" id="speak-btn">
+                            <i class="fas fa-volume-up"></i> 点击朗读
+                        </button>
+                    </div>
+                    
+                    <div class="hint-box">
+                        <h3><i class="fas fa-lightbulb"></i> 艾宾浩斯学习法提示</h3>
+                        <p id="hint-text">这是您第一次学习这个生字。根据艾宾浩斯记忆法，请在20分钟后复习一次。</p>
+                        <div class="review-schedule">
+                            <div class="review-item">
+                                <span class="review-time">20分钟后</span>
+                                <span class="review-action">第一次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">1小时后</span>
+                                <span class="review-action">第二次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">9小时后</span>
+                                <span class="review-action">第三次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">1天后</span>
+                                <span class="review-action">第四次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">2天后</span>
+                                <span class="review-action">第五次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">6天后</span>
+                                <span class="review-action">第六次复习</span>
+                            </div>
+                            <div class="review-item">
+                                <span class="review-time">31天后</span>
+                                <span class="review-action">第七次复习</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-info">
+                    <div class="info-card">
+                        <div class="info-section">
+                            <h3><i class="fas fa-pinyin"></i> 拼音</h3>
+                            <div class="pinyin" id="pinyin">tiān</div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3><i class="fas fa-list"></i> 组词</h3>
+                            <div class="word-groups" id="word-groups">
+                                <span class="word-group">天空</span>
+                                <span class="word-group">今天</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h3><i class="fas fa-comment"></i> 例句</h3>
+                            <div class="sentence" id="sentence">蓝蓝的天空像大海。</div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="control-btn prev-btn" id="prev-btn">
+                            <i class="fas fa-arrow-left"></i> 上一个
+                        </button>
+                        <button class="control-btn next-btn" id="next-btn">
+                            下一个 <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="control-btn review-btn" id="review-btn">
+                            <i class="fas fa-redo"></i> 标记为需复习
+                        </button>
+                        <button class="control-btn mastered-btn" id="mastered-btn">
+                            <i class="fas fa-check-circle"></i> 标记为已掌握
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="learning-stats">
+                <div class="stat-card">
+                    <h3><i class="fas fa-chart-line"></i> 学习统计</h3>
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-value" id="total-count">0</span>
+                            <span class="stat-label">总字数</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="learned-count">0</span>
+                            <span class="stat-label">已学习</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="review-count">0</span>
+                            <span class="stat-label">需复习</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="mastered-count">0</span>
+                            <span class="stat-label">已掌握</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="study-footer">
+            <p>艾宾浩斯记忆法：在学习后的特定时间点复习，可以有效巩固记忆，减少遗忘。</p>
+        </footer>
+    </div>
+    
+    <script src="study.js"></script>
+</body>
+</html>
