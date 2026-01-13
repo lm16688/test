@@ -58,9 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 根据新格式查找对应年级的数据
             const gradeData = data.find(item => item.grade === currentGrade);
             
-            if (gradeData && gradeData.characters) {
+            if (currentGrade && currentGrade.characters) {
                 // 将数据格式转换为内部使用的格式
-                charactersData = gradeData.characters.map(item => ({
+                charactersData = currentGrade.characters.map(item => ({
                     character: item.word,
                     pinyin: item.pinyin,
                     wordGroups: item.words,
