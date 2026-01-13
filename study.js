@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 加载生字数据
-    function loadCharactersData() {
+    async function loadCharactersData() {
         try {
             // 从data.json文件加载数据
             const response = await fetch('data.json');
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 获取演示数据（作为后备）
-    function getDemoData() {
+    async function getDemoData() {
         return [
             {character: "天", pinyin: "tiān", wordGroups: ["天空", "今天"], sentence: "蓝蓝的天空像大海。"},
             {character: "地", pinyin: "dì", wordGroups: ["大地", "土地"], sentence: "大地妈妈真温暖。"},
