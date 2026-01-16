@@ -19,6 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const masteredCountElement = document.getElementById('mastered-count');
     const hintText = document.getElementById('hint-text');
     
+    // 新增的DOM元素
+    const reviewStatsBtn = document.getElementById('review-stats-btn');
+    const masteredStatsBtn = document.getElementById('mastered-stats-btn');
+    const reviewCountBtn = document.getElementById('review-count-btn');
+    const masteredCountBtn = document.getElementById('mastered-count-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modal = document.getElementById('review-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const charactersList = document.getElementById('characters-list');
+    const modalEmpty = document.getElementById('modal-empty');
+    const modalClose = document.getElementById('modal-close');
+    
     // 学习状态变量
     let currentGrade = '';
     let charactersData = [];
@@ -26,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let learnedCharacters = [];
     let reviewCharacters = [];
     let masteredCharacters = [];
+    let currentModalType = ''; // 'review' 或 'mastered'
     
     // 初始化
     async function init() {
@@ -42,6 +55,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新显示
         updateDisplay();
         updateStats();
+        
+        // 绑定新的事件
+        bindNewEvents();
     }
     
     // 加载生字数据
@@ -121,6 +137,9 @@ document.addEventListener('DOMContentLoaded', function() {
             lastUpdated: new Date().toISOString()
         };
         localStorage.setItem(`learningProgress_${currentGrade}`, JSON.stringify(progress));
+        
+        // 更新统计按钮上的数字
+        updateStatsButtons();
     }
     
     // 更新显示当前生字
@@ -170,6 +189,15 @@ document.addEventListener('DOMContentLoaded', function() {
         learnedCountElement.textContent = learnedCharacters.length;
         reviewCountElement.textContent = reviewCharacters.length;
         masteredCountElement.textContent = masteredCharacters.length;
+        
+        // 同时更新统计按钮上的数字
+        updateStatsButtons();
+    }
+    
+    // 更新统计按钮上的数字
+    function updateStatsButtons() {
+        reviewCountBtn.textContent = reviewCharacters.length;
+        masteredCountBtn.textContent = masteredCharacters.length;
     }
     
     // 更新艾宾浩斯提示
@@ -189,6 +217,96 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // 绑定新的事件
+    function bindNewEvents() {
+        // 查看需复习按钮
+        reviewStatsBtn.addEventListener('click', function() {
+            showCharactersModal('review', '需复习的生字');
+        });
+        
+        // 查看已掌握按钮
+        masteredStatsBtn.addEventListener('click', function() {
+            showCharactersModal('mastered', '已掌握的生字');
+        });
+        
+        // 关闭模态框
+        modalClose.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
+                closeModal();
+            }
+        });
+        
+        // 按下ESC键关闭模态框
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modalOverlay.style.display !== 'none') {
+                closeModal();
+            }
+        });
+    }
+    
+    // 显示生字列表模态框
+    function showCharactersModal(type, title) {
+        currentModalType = type;
+        modalTitle.textContent = title;
+        
+        // 获取对应的生字列表
+        let characters = [];
+        if (type === 'review') {
+            characters = reviewCharacters;
+        } else if (type === 'mastered') {
+            characters = masteredCharacters;
+        }
+        
+        // 清空列表
+        charactersList.innerHTML = '';
+        
+        if (characters.length === 0) {
+            // 显示空状态
+            modalEmpty.style.display = 'block';
+        } else {
+            modalEmpty.style.display = 'none';
+            
+            // 显示生字列表
+            characters.forEach(char => {
+                // 找到生字的完整信息
+                const charInfo = charactersData.find(item => item.character === char);
+                if (charInfo) {
+                    const charItem = document.createElement('div');
+                    charItem.className = 'character-item';
+                    charItem.innerHTML = `
+                        <div class="character-display">${charInfo.character}</div>
+                        <div class="character-pinyin">${charInfo.pinyin}</div>
+                        <div class="learning-status">
+                            ${reviewCharacters.includes(char) ? '<span class="status-review">需复习</span>' : ''}
+                            ${masteredCharacters.includes(char) ? '<span class="status-mastered">已掌握</span>' : ''}
+                        </div>
+                    `;
+                    
+                    // 点击生字项，跳转到该生字学习
+                    charItem.addEventListener('click', function() {
+                        const index = charactersData.findIndex(item => item.character === char);
+                        if (index !== -1) {
+                            currentIndex = index;
+                            updateDisplay();
+                            closeModal();
+                        }
+                    });
+                    
+                    charactersList.appendChild(charItem);
+                }
+            });
+        }
+        
+        // 显示模态框
+        modalOverlay.style.display = 'flex';
+    }
+    
+    // 关闭模态框
+    function closeModal() {
+        modalOverlay.style.display = 'none';
+    }
+    
     // 语音朗读
     function speakText(text) {
         if ('speechSynthesis' in window) {
@@ -203,7 +321,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 开始朗读
             speechSynthesis.speak(utterance);
         } else {
-            alert('您的浏览器不支持语音朗读功能，请使用Chrome、Edge或Safari浏览器。');
+            // 不再弹出alert，静默处理
+            console.log('您的浏览器不支持语音朗读功能');
         }
     }
     
@@ -256,8 +375,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStats();
         updateHint();
         
-        // 显示反馈
-        alert(`已将"${char}"标记为需要复习。系统会根据艾宾浩斯记忆法提醒您复习。`);
+        // 不再弹出alert，改为在按钮上显示反馈
+        const originalText = reviewBtn.innerHTML;
+        reviewBtn.innerHTML = '<i class="fas fa-check"></i> 已标记';
+        reviewBtn.style.backgroundColor = '#27ae60';
+        
+        setTimeout(() => {
+            reviewBtn.innerHTML = originalText;
+            reviewBtn.style.backgroundColor = '';
+        }, 1500);
     });
     
     masteredBtn.addEventListener('click', function() {
@@ -285,8 +411,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStats();
         updateHint();
         
-        // 显示反馈
-        alert(`恭喜！已将"${char}"标记为已掌握。`);
+        // 不再弹出alert，改为在按钮上显示反馈
+        const originalText = masteredBtn.innerHTML;
+        masteredBtn.innerHTML = '<i class="fas fa-check"></i> 已掌握';
+        masteredBtn.style.backgroundColor = '#4a6fa5';
+        
+        setTimeout(() => {
+            masteredBtn.innerHTML = originalText;
+            masteredBtn.style.backgroundColor = '';
+        }, 1500);
     });
     
     // 初始化应用
