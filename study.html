@@ -26,23 +26,57 @@
         <main class="study-main">
             <div class="character-section">
                 <div class="character-display">
-                   <div class="character-card" id="character-card">
+                  <div class="character-card" id="character-card">
     <div class="character-display-wrapper">
         <!-- 田字格背景 -->
         <div class="character-grid">
             <div class="grid-line vertical"></div>
             <div class="grid-line horizontal"></div>
-            <!-- 可选：添加米字格斜线 -->
-             <div class="grid-line diagonal-1"></div>
-            <div class="grid-line diagonal-2"></div>
         </div>
         <!-- 生字显示 -->
-        <div class="character" id="character"></div>
+        <div class="character" id="character">天</div>
     </div>
     <div class="grid-size-hint">田字格</div>
     <button class="speak-btn" id="speak-btn">
         <i class="fas fa-volume-up"></i> 点击朗读
     </button>
+    
+    <!-- 新增：复习和掌握按钮组 -->
+    <div class="review-mastered-buttons">
+        <button class="stats-btn review-stats-btn" id="review-stats-btn">
+            <i class="fas fa-redo"></i> 需复习 (<span id="review-count-btn">0</span>)
+        </button>
+        <button class="stats-btn mastered-stats-btn" id="mastered-stats-btn">
+            <i class="fas fa-check-circle"></i> 已掌握 (<span id="mastered-count-btn">0</span>)
+        </button>
+    </div>
+    
+    <!-- 新增：生字卡片滑动容器 -->
+    <div class="characters-slider-container" id="characters-slider-container" style="display: none;">
+        <div class="slider-header">
+            <h4 id="slider-title">需复习的生字</h4>
+            <button class="close-slider-btn" id="close-slider-btn">&times;</button>
+        </div>
+        <div class="slider-content">
+            <div class="characters-slider" id="characters-slider">
+                <!-- 生字卡片会在这里动态生成 -->
+            </div>
+            <div class="slider-empty" id="slider-empty" style="display: none;">
+                <p>暂无生字</p>
+            </div>
+        </div>
+        <div class="slider-controls">
+            <button class="slider-prev-btn" id="slider-prev-btn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="slider-dots" id="slider-dots">
+                <!-- 分页点会在这里动态生成 -->
+            </div>
+            <button class="slider-next-btn" id="slider-next-btn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
 </div>
                     
                     <div class="hint-box">
@@ -143,33 +177,7 @@
                 </div>
             </div>
         </main>
-                <!-- 复习和掌握生字列表模态框 -->
-        <div class="modal-overlay" id="modal-overlay" style="display: none;">
-            <div class="modal" id="review-modal">
-                <div class="modal-header">
-                    <h3 id="modal-title">需复习的生字</h3>
-                    <button class="modal-close" id="modal-close">&times;</button>
-                </div>
-                <div class="modal-content">
-                    <div class="characters-list" id="characters-list">
-                        <!-- 生字列表会在这里动态生成 -->
-                    </div>
-                    <div class="modal-empty" id="modal-empty" style="display: none;">
-                        <p>暂无生字</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 新增的统计按钮 -->
-        <div class="stats-buttons">
-            <button class="stats-btn review-stats-btn" id="review-stats-btn">
-                <i class="fas fa-redo"></i> 查看需复习 (<span id="review-count-btn">0</span>)
-            </button>
-            <button class="stats-btn mastered-stats-btn" id="mastered-stats-btn">
-                <i class="fas fa-check-circle"></i> 查看已掌握 (<span id="mastered-count-btn">0</span>)
-            </button>
-        </div>
+               
         <footer class="study-footer">
             <p>艾宾浩斯记忆法：在学习后的特定时间点复习，可以有效巩固记忆，减少遗忘。</p>
         </footer>
