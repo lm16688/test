@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小学语文生字学习</title>
+    <title>小学语文生字学习系统</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -15,8 +15,12 @@
                 <h1>关注女侠，解锁更多陪娃技巧！</h1>
                 <div class="qr-codes">
                     <div class="qr-item">
-                        <img src="wechat.jpg" alt="微信公众号">
-                        <p>微信公众号</p>
+                        <img src="weixin.jpg" alt="微信">
+                        <p>微信</p>
+                    </div>
+                    <div class="qr-item">
+                        <img src="wechat.jpg" alt="视频号">
+                        <p>视频号</p>
                     </div>
                     <div class="qr-item">
                         <img src="xiaohongshu.jpg" alt="小红书">
@@ -33,6 +37,7 @@
         <main class="main-content">
             <div class="welcome-section">
                 <h2>小学语文生字学习系统</h2>
+                <p class="note">根据教育部组织编写人教版汇总！</p>
                 <p class="subtitle">采用艾宾浩斯记忆法，科学记忆生字词</p>
                 <div class="features">
                     <div class="feature">
@@ -51,7 +56,7 @@
                         <p>按年级和上下册分类，循序渐进</p>
                     </div>
                 </div>
-            </div>
+            </div>    
             
             <div class="grade-selection">
                 <h2>请选择年级</h2>
@@ -76,12 +81,22 @@
                         <button class="grade-btn" onclick="selectGrade('四年级上册')">四年级上册</button>
                         <button class="grade-btn" onclick="selectGrade('四年级下册')">四年级下册</button>
                     </div>
+                    <div class="grade-group">
+                        <h3>五年级</h3>
+                        <button class="grade-btn" onclick="selectGrade('五年级上册')">五年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('五年级下册')">五年级下册</button>
+                    </div>
+                    <div class="grade-group">
+                        <h3>六年级</h3>
+                        <button class="grade-btn" onclick="selectGrade('六年级上册')">六年级上册</button>
+                        <button class="grade-btn" onclick="selectGrade('六年级下册')">六年级下册</button>
+                    </div>
                 </div>
             </div>
         </main>
         
         <footer class="footer">
-            <p>© 2023 小学语文生字学习系统 | 采用艾宾浩斯记忆法</p>
+            <p>根据教育部组织编写人教版汇总| 采用艾宾浩斯记忆法</p>
             <p class="hint">提示：学习前请确保已连接网络，以便使用语音朗读功能</p>
         </footer>
     </div>
