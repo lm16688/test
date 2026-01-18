@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+    <!-- 添加导出功能所需的库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.0/index.min.js"></script>
     <style>
         /* 字帖打印页面特定样式 */
         .copybook-container {
@@ -17,7 +21,7 @@
         
         .copybook-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .copybook-header h1 {
@@ -29,6 +33,48 @@
         .copybook-header p {
             color: #666;
             font-size: 16px;
+        }
+        
+        /* 顶部操作栏样式 */
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+        
+        .btn-secondary {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #3a5a8a;
         }
         
         .copybook-main {
@@ -165,6 +211,45 @@
             display: block;
         }
         
+        .generate-btn, .generate-excel-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .generate-btn:hover:not(:disabled), .generate-excel-btn:hover:not(:disabled) {
+            background-color: #3a5a8a;
+        }
+        
+        .generate-btn:disabled, .generate-excel-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .character-count {
+            padding: 10px;
+            background-color: #e8f4ff;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .character-count p {
+            margin: 0;
+            color: #4a6fa5;
+            font-weight: 500;
+        }
+        
         .copybook-preview {
             display: none;
         }
@@ -246,10 +331,20 @@
             font-size: 16px;
         }
         
-        .grid-container {
-            display: grid;
-            gap: 20px;
-            margin-bottom: 30px;
+        .page-container {
+            margin-bottom: 40px;
+            break-inside: avoid;
+        }
+        
+        .page-container:last-child {
+            margin-bottom: 0;
+        }
+        
+        .grid-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--row-gap, 20px);
+            page-break-inside: avoid;
         }
         
         .grid-item {
@@ -257,6 +352,16 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            border: 1px solid var(--grid-color, #cccccc);
+        }
+        
+        /* 字帖行布局：第一个格子有字，后面的都是空格 */
+        .grid-item:first-child {
+            background-color: #fff;
+        }
+        
+        .grid-item:not(:first-child) {
+            background-color: #fff;
         }
         
         /* 网格内部样式 */
@@ -269,13 +374,40 @@
             align-items: center;
         }
         
-        /* 不同的网格类型样式 */
+        /* 田字格样式 - 带虚线 */
         .grid-inner.square {
-            border: 1px solid;
+            border: 1px solid var(--grid-color, #cccccc);
+            position: relative;
         }
         
+        .grid-inner.square::before,
+        .grid-inner.square::after {
+            content: '';
+            position: absolute;
+            background-color: transparent;
+            border: 1px dashed var(--grid-color, #cccccc);
+            opacity: 0.6;
+        }
+        
+        .grid-inner.square::before {
+            top: 0;
+            left: 50%;
+            width: 0;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+        
+        .grid-inner.square::after {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 0;
+            transform: translateY(-50%);
+        }
+        
+        /* 田字格（加强版） */
         .grid-inner.tian {
-            border: 1px solid;
+            border: 1px solid var(--grid-color, #cccccc);
             position: relative;
         }
         
@@ -302,8 +434,10 @@
             transform: translateY(-50%);
         }
         
+        /* 十字格 */
         .grid-inner.cross {
             position: relative;
+            border: 1px solid var(--grid-color, #cccccc);
         }
         
         .grid-inner.cross::before,
@@ -311,6 +445,7 @@
             content: '';
             position: absolute;
             background-color: var(--grid-color, #cccccc);
+            opacity: 0.7;
         }
         
         .grid-inner.cross::before {
@@ -329,15 +464,20 @@
             transform: translateY(-50%);
         }
         
+        /* 九宫格 */
         .grid-inner.nine {
             position: relative;
+            border: 1px solid var(--grid-color, #cccccc);
         }
         
         .grid-inner.nine::before,
-        .grid-inner.nine::after {
+        .grid-inner.nine::after,
+        .grid-inner.nine .vertical-line-1,
+        .grid-inner.nine .vertical-line-2 {
             content: '';
             position: absolute;
             background-color: var(--grid-color, #cccccc);
+            opacity: 0.6;
         }
         
         .grid-inner.nine::before {
@@ -354,25 +494,24 @@
             height: 1px;
         }
         
-        .grid-inner.nine .vertical-line-1,
-        .grid-inner.nine .vertical-line-2 {
-            position: absolute;
+        .grid-inner.nine .vertical-line-1 {
             top: 0;
+            left: 33.33%;
             width: 1px;
             height: 100%;
-            background-color: var(--grid-color, #cccccc);
-        }
-        
-        .grid-inner.nine .vertical-line-1 {
-            left: 33.33%;
         }
         
         .grid-inner.nine .vertical-line-2 {
+            top: 0;
             left: 66.66%;
+            width: 1px;
+            height: 100%;
         }
         
+        /* 米字格 - 带虚线 */
         .grid-inner.rice {
             position: relative;
+            border: 1px solid var(--grid-color, #cccccc);
         }
         
         .grid-inner.rice::before,
@@ -382,6 +521,7 @@
             content: '';
             position: absolute;
             background-color: var(--grid-color, #cccccc);
+            opacity: 0.6;
         }
         
         .grid-inner.rice::before {
@@ -418,6 +558,7 @@
             transform-origin: top right;
         }
         
+        /* 无网格 */
         .grid-inner.none {
             border: none !important;
         }
@@ -428,7 +569,8 @@
             font-weight: var(--font-weight, 400);
             color: var(--font-color, #000000);
             font-family: var(--font-family, "'Ma Shan Zheng', cursive");
-            z-index: 1;
+            z-index: 2;
+            position: relative;
         }
         
         .pinyin {
@@ -517,14 +659,13 @@
             color: #555;
         }
         
-        /* 右侧调节栏样式 */
+        /* 右侧调节栏样式 - 只保留方格设置和字体设置 */
         .settings-panel {
             background-color: white;
             border-radius: 12px;
             padding: 25px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             height: fit-content;
-            /* 移除 sticky 定位 */
         }
         
         .settings-title {
@@ -609,25 +750,6 @@
             outline: none;
         }
         
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            margin-right: 10px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        
-        .checkbox-group label {
-            cursor: pointer;
-            color: #555;
-            user-select: none;
-        }
-        
         .font-preview {
             margin-top: 15px;
             padding: 15px;
@@ -636,6 +758,10 @@
             text-align: center;
             font-size: 24px;
             border: 1px solid #e0e0e0;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .apply-btn {
@@ -661,6 +787,139 @@
             transform: translateY(-2px);
         }
         
+        /* 导出选项模态框 */
+        .export-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .export-modal.show {
+            display: flex;
+        }
+        
+        .export-modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .export-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .export-modal-header h3 {
+            color: #4a6fa5;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .export-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .export-options {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .export-option {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .export-option:hover {
+            border-color: #4a6fa5;
+            background-color: #f8faff;
+            transform: translateY(-3px);
+        }
+        
+        .export-option i {
+            font-size: 36px;
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+        
+        .export-option h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .export-option p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .export-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .export-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background-color: #4a6fa5;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .export-btn:hover {
+            background-color: #3a5a8a;
+        }
+        
+        .cancel-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: white;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* 导航按钮 */
         .navigation-buttons {
             display: flex;
             justify-content: center;
@@ -711,6 +970,7 @@
                 width: 100%;
             }
             
+            .action-bar,
             .settings-panel,
             .print-controls,
             .navigation-buttons,
@@ -726,7 +986,13 @@
                 padding: 0;
             }
             
-            .grid-container {
+            .page-container {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+            }
+            
+            .grid-row {
                 break-inside: avoid;
                 page-break-inside: avoid;
             }
@@ -739,6 +1005,17 @@
             color: #666;
             font-size: 14px;
         }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            color: #4a6fa5;
+        }
+        
+        .loading.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -747,19 +1024,44 @@
             <h1><i class="fas fa-print"></i> 字帖打印</h1>
             <p>生成规范楷体硬笔字帖，支持打印和练习</p>
         </header>
-
-<!-- 顶部操作栏 -->
-<div class="action-bar">
-    <button id="export-btn" class="btn btn-primary">
-        <i class="fas fa-file-export"></i> 导 出
-    </button>
-    <button id="print-btn" class="btn btn-secondary">
-        <i class="fas fa-print"></i> 打 印
-    </button>
-</div>
+        
+        <!-- 顶部操作栏 -->
+        <div class="action-bar">
+            <button id="export-btn" class="btn btn-primary">
+                <i class="fas fa-file-export"></i> 导 出
+            </button>
+            <button id="print-btn-main" class="btn btn-secondary">
+                <i class="fas fa-print"></i> 打 印
+            </button>
+        </div>
+        
+        <!-- 导出选项模态框 -->
+        <div class="export-modal" id="export-modal">
+            <div class="export-modal-content">
+                <div class="export-modal-header">
+                    <h3>选择导出格式</h3>
+                    <button class="close-btn" id="close-export-modal">&times;</button>
+                </div>
+                <div class="export-options">
+                    <div class="export-option" id="export-pdf">
+                        <i class="fas fa-file-pdf"></i>
+                        <h4>PDF格式</h4>
+                        <p>导出为高质量PDF文件，适合打印</p>
+                    </div>
+                    <div class="export-option" id="export-word">
+                        <i class="fas fa-file-word"></i>
+                        <h4>Word格式</h4>
+                        <p>导出为可编辑的Word文档</p>
+                    </div>
+                </div>
+                <div class="export-actions">
+                    <button class="cancel-btn" id="cancel-export">取消</button>
+                    <button class="export-btn" id="confirm-export" style="display:none;">确认导出</button>
+                </div>
+            </div>
+        </div>
         
         <main class="copybook-main">
-
             <!-- 左侧主内容区 -->
             <div class="copybook-content">
                 <div class="copybook-options">
@@ -770,18 +1072,6 @@
                             <label for="grade-select">选择年级：</label>
                             <select id="grade-select" class="grade-select">
                                 <option value="">请选择年级...</option>
-                                <option value="一年级上册">一年级上册</option>
-                                <option value="一年级下册">一年级下册</option>
-                                <option value="二年级上册">二年级上册</option>
-                                <option value="二年级下册">二年级下册</option>
-                                <option value="三年级上册">三年级上册</option>
-                                <option value="三年级下册">三年级下册</option>
-                                <option value="四年级上册">四年级上册</option>
-                                <option value="四年级下册">四年级下册</option>
-                                <option value="五年级上册">五年级上册</option>
-                                <option value="五年级下册">五年级下册</option>
-                                <option value="六年级上册">六年级上册</option>
-                                <option value="六年级下册">六年级下册</option>
                             </select>
                         </div>
                         <div class="character-count" id="character-count" style="display: none;">
@@ -812,6 +1102,12 @@
                             <i class="fas fa-magic"></i> 从Excel生成字帖
                         </button>
                     </div>
+                </div>
+                
+                <!-- 加载提示 -->
+                <div class="loading" id="loading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>正在生成字帖，请稍候...</p>
                 </div>
                 
                 <!-- 字帖预览区域 -->
@@ -845,7 +1141,7 @@
                 </div>
             </div>
             
-            <!-- 右侧调节栏 -->
+            <!-- 右侧调节栏（只保留方格设置和字体设置） -->
             <div class="settings-panel" id="settings-panel">
                 <h2 class="settings-title"><i class="fas fa-sliders-h"></i> 字帖设置</h2>
                 
@@ -867,17 +1163,22 @@
                         <input type="range" id="grid-gap" class="range-slider" min="5" max="50" value="20" step="5">
                     </div>
                     
-                   
+                    <div class="control-group">
+                        <label>
+                            网格线颜色:
+                            <input type="color" id="grid-color" value="#cccccc" style="width:100%;height:35px;margin-top:5px;">
+                        </label>
+                    </div>
                     
                     <div class="control-group">
                         <label>网格类型:</label>
                         <select id="grid-type" class="select-control">
                             <option value="square">田字格</option>
-                          
+                            <option value="tian">田字格（加强版）</option>
                             <option value="cross">十字格</option>
-                           
+                            <option value="nine">九宫格</option>
                             <option value="rice">米字格</option>
-                           
+                            <option value="none">无网格</option>
                         </select>
                     </div>
                 </div>
@@ -923,22 +1224,6 @@
                     </div>
                 </div>
                 
-                <!-- 3. 显示选项 -->
-                <div class="settings-section">
-                   
-                    
-                    <div class="control-group">
-                        <label>每页显示:</label>
-                        <select id="chars-per-page" class="select-control">
-                            <option value="12">12个字</option>
-                            <option value="24" selected>24个字</option>
-                            <option value="36">36个字</option>
-                            <option value="48">48个字</option>
-                            <option value="60">60个字</option>
-                        </select>
-                    </div>
-                </div>
-                
                 <button class="apply-btn" id="apply-settings">
                     <i class="fas fa-check"></i> 应用设置
                 </button>
@@ -964,8 +1249,5 @@
     <!-- 引入SheetJS库处理Excel文件 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="copybook.js"></script>
-    <!-- 在原有脚本之后添加 -->
-<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 </html>
