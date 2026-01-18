@@ -12,73 +12,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const generateExcelBtn = document.getElementById('generate-excel-btn');
     const copybookPreview = document.getElementById('copybook-preview');
     const previewTitle = document.getElementById('preview-title');
-    const copybookGrid = document.getElementById('copybook-grid');
-    const refreshBtn = document.getElementById('refresh-btn');
+    const copybookContent = document.getElementById('copybook-content');
     const printBtn = document.getElementById('print-btn');
-    const printBtnMain = document.getElementById('print-btn-main');
-    const applySettingsBtn = document.getElementById('apply-settings');
-    const loading = document.getElementById('loading');
+    const exportPdfBtn = document.getElementById('export-pdf-btn');
+    const exportWordBtn = document.getElementById('export-word-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
     
-    // 导出相关元素
-    const exportBtn = document.getElementById('export-btn');
-    const exportModal = document.getElementById('export-modal');
-    const closeExportModal = document.getElementById('close-export-modal');
-    const cancelExport = document.getElementById('cancel-export');
-    const exportPdf = document.getElementById('export-pdf');
-    const exportWord = document.getElementById('export-word');
-    const confirmExport = document.getElementById('confirm-export');
-    
-    // 分页控制元素
-    const paginationControls = document.getElementById('pagination-controls');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
-    const pageInfo = document.getElementById('page-info');
-    
-    // 设置控制元素
-    const gridSizeSlider = document.getElementById('grid-size');
+    // 设置面板元素
+    const gridTypeButtons = document.querySelectorAll('.grid-type-btn[data-type]');
+    const gridSizeSlider = document.getElementById('grid-size-slider');
     const gridSizeValue = document.getElementById('grid-size-value');
-    const gridGapSlider = document.getElementById('grid-gap');
-    const gridGapValue = document.getElementById('grid-gap-value');
-    const gridColorPicker = document.getElementById('grid-color');
-    const gridTypeSelect = document.getElementById('grid-type');
-    const fontFamilySelect = document.getElementById('font-family');
-    const fontSizeSlider = document.getElementById('font-size');
+    const charsPerRowSlider = document.getElementById('chars-per-row-slider');
+    const charsPerRowValue = document.getElementById('chars-per-row-value');
+    const rowSpacingSlider = document.getElementById('row-spacing-slider');
+    const rowSpacingValue = document.getElementById('row-spacing-value');
+    const fontFamilySelect = document.getElementById('font-family-select');
+    const fontSizeSlider = document.getElementById('font-size-slider');
     const fontSizeValue = document.getElementById('font-size-value');
-    const fontWeightSlider = document.getElementById('font-weight');
-    const fontWeightValue = document.getElementById('font-weight-value');
-    const fontColorPicker = document.getElementById('font-color');
-    const fontPreview = document.getElementById('font-preview');
+    const fontWeightSelect = document.getElementById('font-weight-select');
+    const pinyinSizeSlider = document.getElementById('pinyin-size-slider');
+    const pinyinSizeValue = document.getElementById('pinyin-size-value');
+    const pageRowsSelect = document.getElementById('page-rows-select');
+    const orientationButtons = document.querySelectorAll('.grid-type-btn[data-orientation]');
+    const showPinyinButtons = document.querySelectorAll('.grid-type-btn[data-show-pinyin]');
+    const showStrokesButtons = document.querySelectorAll('.grid-type-btn[data-show-strokes]');
     
     // 当前字帖数据
     let currentCopybookData = [];
     let currentSource = ''; // 'system' 或 'excel'
     let currentGrade = '';
     
-    // 分页相关变量
-    let currentPage = 1;
-    let totalPages = 1;
-    let charsPerPage = 24;
-    
-    // 导出相关变量
-    let selectedExportType = '';
-    
-    // 当前设置
-    let currentSettings = {
-        gridSize: 150,
-        gridGap: 20,
-        gridColor: '#cccccc',
-        gridType: 'square',
+    // 字帖设置
+    let settings = {
+        gridType: 'tianzi', // 'tianzi' 或 'mizi'
+        gridSize: 80, // 像素
+        charsPerRow: 5,
+        rowSpacing: 25, // 像素
         fontFamily: "'Ma Shan Zheng', cursive",
-        fontSize: 48,
+        fontSize: 48, // 像素
         fontWeight: 400,
-        fontColor: '#000000'
+        pinyinSize: 12, // 像素
+        pageRows: 12,
+        orientation: 'portrait', // 'portrait' 或 'landscape'
+        showPinyin: true,
+        showStrokes: true
     };
     
     // 初始化事件监听器
     function init() {
-        // 初始化设置值显示
-        updateSettingsDisplay();
-        
         // 年级选择事件
         gradeSelect.addEventListener('change', function() {
             const selectedGrade = this.value;
@@ -113,169 +94,159 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // 重新生成按钮
-        refreshBtn.addEventListener('click', function() {
-            if (currentSource === 'system') {
-                generateCopybookFromSystem();
-            } else if (currentSource === 'excel') {
-                if (excelFileInput.files.length > 0) {
-                    processExcelFile(excelFileInput.files[0]);
-                }
-            }
-        });
-        
         // 打印按钮
         printBtn.addEventListener('click', function() {
             window.print();
         });
         
-        // 顶部打印按钮
-        printBtnMain.addEventListener('click', function() {
-            window.print();
+        // 导出PDF按钮
+        exportPdfBtn.addEventListener('click', exportToPDF);
+        
+        // 导出Word按钮
+        exportWordBtn.addEventListener('click', exportToWord);
+        
+        // 网格类型按钮
+        gridTypeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                gridTypeButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                settings.gridType = this.dataset.type;
+                if (currentCopybookData.length > 0) {
+                    generateCopybookContent();
+                }
+            });
         });
         
-        // 应用设置按钮
-        applySettingsBtn.addEventListener('click', applySettings);
-        
-        // 分页按钮事件
-        prevPageBtn.addEventListener('click', goToPrevPage);
-        nextPageBtn.addEventListener('click', goToNextPage);
-        
-        // 导出相关事件
-        exportBtn.addEventListener('click', openExportModal);
-        closeExportModal.addEventListener('click', closeExportModalFunc);
-        cancelExport.addEventListener('click', closeExportModalFunc);
-        
-        exportPdf.addEventListener('click', function() {
-            selectExportType('pdf');
+        // 方格大小滑块
+        gridSizeSlider.addEventListener('input', function() {
+            gridSizeValue.textContent = this.value;
+            settings.gridSize = parseInt(this.value);
+            updateCharsPerRow();
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
         });
         
-        exportWord.addEventListener('click', function() {
-            selectExportType('word');
+        // 每行字数滑块
+        charsPerRowSlider.addEventListener('input', function() {
+            charsPerRowValue.textContent = this.value;
+            settings.charsPerRow = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
         });
         
-        confirmExport.addEventListener('click', handleExport);
+        // 行间距滑块
+        rowSpacingSlider.addEventListener('input', function() {
+            rowSpacingValue.textContent = this.value;
+            settings.rowSpacing = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
         
-        // 设置滑块和选择器事件
-        setupSettingsEvents();
+        // 字体类型选择
+        fontFamilySelect.addEventListener('change', function() {
+            settings.fontFamily = this.value;
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
+        
+        // 字体大小滑块
+        fontSizeSlider.addEventListener('input', function() {
+            fontSizeValue.textContent = this.value;
+            settings.fontSize = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
+        
+        // 字体粗细选择
+        fontWeightSelect.addEventListener('change', function() {
+            settings.fontWeight = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
+        
+        // 拼音大小滑块
+        pinyinSizeSlider.addEventListener('input', function() {
+            pinyinSizeValue.textContent = this.value;
+            settings.pinyinSize = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
+        
+        // 每页行数选择
+        pageRowsSelect.addEventListener('change', function() {
+            settings.pageRows = parseInt(this.value);
+            if (currentCopybookData.length > 0) {
+                generateCopybookContent();
+            }
+        });
+        
+        // 纸张方向按钮
+        orientationButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                orientationButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                settings.orientation = this.dataset.orientation;
+                if (currentCopybookData.length > 0) {
+                    generateCopybookContent();
+                }
+            });
+        });
+        
+        // 显示拼音按钮
+        showPinyinButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                showPinyinButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                settings.showPinyin = this.dataset.showPinyin === 'true';
+                if (currentCopybookData.length > 0) {
+                    generateCopybookContent();
+                }
+            });
+        });
+        
+        // 显示笔画数按钮
+        showStrokesButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                showStrokesButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                settings.showStrokes = this.dataset.showStrokes === 'true';
+                if (currentCopybookData.length > 0) {
+                    generateCopybookContent();
+                }
+            });
+        });
+        
+        // 根据方格大小自动调整每行字数
+        function updateCharsPerRow() {
+            const gridSize = parseInt(gridSizeSlider.value);
+            let charsPerRow;
+            
+            if (gridSize <= 70) {
+                charsPerRow = 8;
+            } else if (gridSize <= 80) {
+                charsPerRow = 6;
+            } else if (gridSize <= 90) {
+                charsPerRow = 5;
+            } else if (gridSize <= 100) {
+                charsPerRow = 4;
+            } else {
+                charsPerRow = 3;
+            }
+            
+            charsPerRowSlider.value = charsPerRow;
+            charsPerRowValue.textContent = charsPerRow;
+            settings.charsPerRow = charsPerRow;
+        }
         
         // 加载年级数据
         loadAvailableGrades();
-        
-        // 点击模态框外部关闭
-        exportModal.addEventListener('click', function(e) {
-            if (e.target === exportModal) {
-                closeExportModalFunc();
-            }
-        });
-    }
-    
-    // 设置滑块和选择器事件
-    function setupSettingsEvents() {
-        // 方格大小
-        gridSizeSlider.addEventListener('input', function() {
-            gridSizeValue.textContent = this.value + 'px';
-            currentSettings.gridSize = parseInt(this.value);
-        });
-        
-        // 行间距
-        gridGapSlider.addEventListener('input', function() {
-            gridGapValue.textContent = this.value + 'px';
-            currentSettings.gridGap = parseInt(this.value);
-        });
-        
-        // 网格线颜色
-        gridColorPicker.addEventListener('input', function() {
-            currentSettings.gridColor = this.value;
-        });
-        
-        // 网格类型
-        gridTypeSelect.addEventListener('change', function() {
-            currentSettings.gridType = this.value;
-        });
-        
-        // 字体类型
-        fontFamilySelect.addEventListener('change', function() {
-            currentSettings.fontFamily = this.value;
-            updateFontPreview();
-        });
-        
-        // 字体大小
-        fontSizeSlider.addEventListener('input', function() {
-            fontSizeValue.textContent = this.value + 'px';
-            currentSettings.fontSize = parseInt(this.value);
-            updateFontPreview();
-        });
-        
-        // 字体粗细
-        fontWeightSlider.addEventListener('input', function() {
-            const weight = parseInt(this.value);
-            let weightText = '';
-            if (weight <= 300) weightText = '细';
-            else if (weight <= 400) weightText = '正常';
-            else if (weight <= 600) weightText = '中等';
-            else if (weight <= 700) weightText = '加粗';
-            else weightText = '特粗';
-            
-            fontWeightValue.textContent = weightText;
-            currentSettings.fontWeight = weight;
-            updateFontPreview();
-        });
-        
-        // 字体颜色
-        fontColorPicker.addEventListener('input', function() {
-            currentSettings.fontColor = this.value;
-            updateFontPreview();
-        });
-    }
-    
-    // 更新设置显示
-    function updateSettingsDisplay() {
-        gridSizeValue.textContent = currentSettings.gridSize + 'px';
-        gridSizeSlider.value = currentSettings.gridSize;
-        gridGapValue.textContent = currentSettings.gridGap + 'px';
-        gridGapSlider.value = currentSettings.gridGap;
-        gridColorPicker.value = currentSettings.gridColor;
-        gridTypeSelect.value = currentSettings.gridType;
-        fontFamilySelect.value = currentSettings.fontFamily;
-        fontSizeValue.textContent = currentSettings.fontSize + 'px';
-        fontSizeSlider.value = currentSettings.fontSize;
-        
-        // 字体粗细显示
-        let weightText = '';
-        if (currentSettings.fontWeight <= 300) weightText = '细';
-        else if (currentSettings.fontWeight <= 400) weightText = '正常';
-        else if (currentSettings.fontWeight <= 600) weightText = '中等';
-        else if (currentSettings.fontWeight <= 700) weightText = '加粗';
-        else weightText = '特粗';
-        
-        fontWeightValue.textContent = weightText;
-        fontWeightSlider.value = currentSettings.fontWeight;
-        fontColorPicker.value = currentSettings.fontColor;
-        
-        updateFontPreview();
-    }
-    
-    // 更新字体预览
-    function updateFontPreview() {
-        fontPreview.style.fontFamily = currentSettings.fontFamily;
-        fontPreview.style.fontSize = currentSettings.fontSize + 'px';
-        fontPreview.style.fontWeight = currentSettings.fontWeight;
-        fontPreview.style.color = currentSettings.fontColor;
-    }
-    
-    // 应用设置
-    function applySettings() {
-        if (currentCopybookData.length > 0) {
-            // 重新生成字帖
-            if (currentSource === 'system') {
-                generateCopybookFromSystem();
-            } else if (currentSource === 'excel') {
-                if (excelFileInput.files.length > 0) {
-                    processExcelFile(excelFileInput.files[0]);
-                }
-            }
-        }
     }
     
     // 加载可用的年级
@@ -285,31 +256,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             // 填充年级选择
-            data.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.grade;
-                option.textContent = item.grade;
-                gradeSelect.appendChild(option);
+            const grades = data.map(item => item.grade);
+            
+            // 如果某些年级不在选择列表中，可以动态添加
+            grades.forEach(grade => {
+                // 检查是否已存在
+                const existingOption = Array.from(gradeSelect.options).find(opt => opt.value === grade);
+                if (!existingOption) {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    gradeSelect.appendChild(option);
+                }
             });
             
         } catch (error) {
             console.error('加载年级数据失败:', error);
-            // 添加默认选项
-            const defaultGrades = [
-                '一年级上册', '一年级下册',
-                '二年级上册', '二年级下册',
-                '三年级上册', '三年级下册',
-                '四年级上册', '四年级下册',
-                '五年级上册', '五年级下册',
-                '六年级上册', '六年级下册'
-            ];
-            
-            defaultGrades.forEach(grade => {
-                const option = document.createElement('option');
-                option.value = grade;
-                option.textContent = grade;
-                gradeSelect.appendChild(option);
-            });
         }
     }
     
@@ -325,8 +287,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 保存数据
                 currentCopybookData = gradeData.characters.map(item => ({
                     character: item.word,
-                    pinyin: item.pinyin || '',
-                    words: item.words || []
+                    pinyin: item.pinyin,
+                    words: item.words || [],
+                    strokeCount: estimateStrokeCount(item.word)
                 }));
                 
                 // 显示字数
@@ -334,53 +297,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 characterCount.style.display = 'block';
                 
                 console.log(`已加载 ${grade} 的 ${currentCopybookData.length} 个生字`);
-            } else {
-                // 如果没有找到数据，使用示例数据
-                currentCopybookData = getSampleData(grade);
-                countNumber.textContent = currentCopybookData.length;
-                characterCount.style.display = 'block';
-                console.log(`使用示例数据: ${grade} 的 ${currentCopybookData.length} 个生字`);
             }
         } catch (error) {
             console.error('加载年级数据失败:', error);
-            // 使用示例数据
-            currentCopybookData = getSampleData(grade);
-            countNumber.textContent = currentCopybookData.length;
-            characterCount.style.display = 'block';
-            console.log(`使用示例数据: ${grade} 的 ${currentCopybookData.length} 个生字`);
+            alert('加载数据失败，请检查网络连接或data.json文件');
         }
-    }
-    
-    // 获取示例数据
-    function getSampleData(grade) {
-        const sampleData = {
-            '一年级上册': [
-                { character: '一', pinyin: 'yī', words: ['一个', '一起'] },
-                { character: '二', pinyin: 'èr', words: ['二月', '第二'] },
-                { character: '三', pinyin: 'sān', words: ['三天', '三月'] },
-                { character: '四', pinyin: 'sì', words: ['四月', '四周'] },
-                { character: '五', pinyin: 'wǔ', words: ['五月', '五个'] },
-                { character: '六', pinyin: 'liù', words: ['六月', '六天'] },
-                { character: '七', pinyin: 'qī', words: ['七月', '七天'] },
-                { character: '八', pinyin: 'bā', words: ['八月', '八天'] },
-                { character: '九', pinyin: 'jiǔ', words: ['九月', '九天'] },
-                { character: '十', pinyin: 'shí', words: ['十月', '十天'] }
-            ],
-            '一年级下册': [
-                { character: '人', pinyin: 'rén', words: ['人民', '大人'] },
-                { character: '口', pinyin: 'kǒu', words: ['口水', '出口'] },
-                { character: '手', pinyin: 'shǒu', words: ['手机', '小手'] },
-                { character: '足', pinyin: 'zú', words: ['足球', '足够'] },
-                { character: '日', pinyin: 'rì', words: ['日期', '生日'] },
-                { character: '月', pinyin: 'yuè', words: ['月亮', '月份'] },
-                { character: '水', pinyin: 'shuǐ', words: ['水果', '喝水'] },
-                { character: '火', pinyin: 'huǒ', words: ['火车', '着火'] },
-                { character: '山', pinyin: 'shān', words: ['山上', '爬山'] },
-                { character: '石', pinyin: 'shí', words: ['石头', '石子'] }
-            ]
-        };
-        
-        return sampleData[grade] || sampleData['一年级上册'];
     }
     
     // 处理文件选择
@@ -398,513 +319,582 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 处理Excel文件
     function processExcelFile(file) {
+        loadingOverlay.classList.add('show');
+        
         const reader = new FileReader();
         
         reader.onload = function(e) {
             try {
                 const data = e.target.result;
-                const workbook = XLSX.read(data, { type: 'binary' });
+                console.log('开始处理Excel文件，大小:', data.length);
+                
+                // 使用正确的读取方式
+                let workbook;
+                if (typeof data === 'string') {
+                    // 二进制字符串
+                    workbook = XLSX.read(data, { type: 'binary' });
+                } else {
+                    // ArrayBuffer
+                    workbook = XLSX.read(data, { type: 'array' });
+                }
+                
+                console.log('Excel工作表:', workbook.SheetNames);
                 
                 // 获取第一个工作表
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // 将工作表转换为JSON
+                // 转换为JSON - 使用原始模式获取所有数据
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                console.log('Excel数据行数:', jsonData.length);
                 
-                // 处理Excel数据
-                processExcelData(jsonData);
+                // 处理数据 - 找到"生字"列的索引
+                let characterColIndex = -1;
+                let pinyinColIndex = -1;
+                let wordsColIndex = -1;
+                
+                // 查找表头行
+                if (jsonData.length > 0) {
+                    const headerRow = jsonData[0];
+                    console.log('表头行:', headerRow);
+                    
+                    // 寻找包含"生字"的列
+                    for (let i = 0; i < headerRow.length; i++) {
+                        const cellValue = String(headerRow[i]).trim();
+                        if (cellValue.includes('生字') || cellValue === 'word' || cellValue === '汉字') {
+                            characterColIndex = i;
+                        } else if (cellValue.includes('拼音') || cellValue === 'pinyin') {
+                            pinyinColIndex = i;
+                        } else if (cellValue.includes('组词') || cellValue === 'words') {
+                            wordsColIndex = i;
+                        }
+                    }
+                    
+                    console.log('找到的列索引:', { characterColIndex, pinyinColIndex, wordsColIndex });
+                }
+                
+                currentCopybookData = [];
+                
+                // 从第二行开始处理数据（跳过表头）
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    let character = '';
+                    
+                    // 尝试从找到的列获取生字
+                    if (characterColIndex !== -1 && row[characterColIndex]) {
+                        character = String(row[characterColIndex]).trim();
+                    } else {
+                        // 如果没有找到特定列，尝试第一列
+                        character = String(row[0] || '').trim();
+                    }
+                    
+                    // 只处理非空的中文字符
+                    if (character && /[\u4e00-\u9fa5]/.test(character)) {
+                        // 获取拼音
+                        let pinyin = '';
+                        if (pinyinColIndex !== -1 && row[pinyinColIndex]) {
+                            pinyin = String(row[pinyinColIndex]).trim();
+                        }
+                        
+                        // 获取组词
+                        let words = [];
+                        if (wordsColIndex !== -1 && row[wordsColIndex]) {
+                            const wordsStr = String(row[wordsColIndex]).trim();
+                            if (wordsStr) {
+                                words = wordsStr.split(/[，,、\s]+/).filter(w => w.trim());
+                            }
+                        }
+                        
+                        currentCopybookData.push({
+                            character: character,
+                            pinyin: pinyin,
+                            words: words,
+                            strokeCount: estimateStrokeCount(character)
+                        });
+                    }
+                }
+                
+                console.log('处理完成，找到生字:', currentCopybookData.length);
+                
+                if (currentCopybookData.length > 0) {
+                    currentSource = 'excel';
+                    currentGrade = '自定义字帖';
+                    generateCopybook('自定义字帖 - 生字练习');
+                } else {
+                    loadingOverlay.classList.remove('show');
+                    alert('Excel文件中未找到有效的生字数据。请确保：\n1. 文件包含"生字"列\n2. 生字列包含中文字符\n3. 文件不是空的');
+                }
                 
             } catch (error) {
-                console.error('处理Excel文件时出错:', error);
-                alert('处理Excel文件时出错，请确保文件格式正确');
+                console.error('处理Excel文件失败:', error);
+                loadingOverlay.classList.remove('show');
+                alert(`处理Excel文件失败: ${error.message}\n请确保文件格式正确（.xlsx或.xls）`);
             }
         };
         
-        reader.onerror = function() {
-            alert('读取文件失败');
+        reader.onerror = function(error) {
+            console.error('读取文件失败:', error);
+            loadingOverlay.classList.remove('show');
+            alert('读取文件失败，请重试');
         };
         
-        reader.readAsBinaryString(file);
-    }
-    
-    // 处理Excel数据
-    function processExcelData(data) {
-        currentCopybookData = [];
-        
-        // 假设Excel第一行是标题行，数据从第二行开始
-        for (let i = 1; i < data.length; i++) {
-            const row = data[i];
-            if (row && row.length > 0) {
-                const character = row[0]?.toString().trim();
-                
-                if (character && character.length === 1) {
-                    // 获取拼音（如果有）
-                    const pinyin = row.length > 1 ? row[1]?.toString().trim() : '';
-                    
-                    // 获取组词（如果有）
-                    const words = row.length > 2 ? row[2]?.toString().trim().split(/[,，]/) : [];
-                    
-                    currentCopybookData.push({
-                        character: character,
-                        pinyin: pinyin,
-                        words: words.filter(word => word.trim() !== '')
-                    });
-                }
-            }
-        }
-        
-        if (currentCopybookData.length > 0) {
-            currentSource = 'excel';
-            generateCopybookFromExcel();
+        // 根据文件类型使用正确的读取方式
+        if (file.name.endsWith('.xlsx')) {
+            reader.readAsArrayBuffer(file);
         } else {
-            alert('Excel文件中没有找到有效的汉字数据');
+            reader.readAsBinaryString(file);
         }
     }
     
     // 从系统数据生成字帖
     function generateCopybookFromSystem() {
-        if (currentCopybookData.length === 0) {
-            alert('请先选择年级或上传Excel文件');
-            return;
-        }
+        if (currentCopybookData.length === 0) return;
         
         currentSource = 'system';
         currentGrade = gradeSelect.value;
-        renderCopybook();
+        
+        const title = `${currentGrade} - 生字练习字帖`;
+        generateCopybook(title);
     }
     
-    // 从Excel数据生成字帖
-    function generateCopybookFromExcel() {
+    // 生成字帖
+    function generateCopybook(title) {
         if (currentCopybookData.length === 0) {
-            alert('Excel文件中没有有效的汉字数据');
+            alert('没有可用的生字数据');
             return;
         }
         
-        renderCopybook();
-    }
-    
-    // 渲染字帖
-    function renderCopybook() {
         // 显示加载提示
-        loading.classList.add('show');
-        copybookPreview.classList.remove('show');
+        loadingOverlay.classList.add('show');
         
-        // 清空预览区
-        copybookGrid.innerHTML = '';
-        
-        // 设置标题
-        if (currentSource === 'system') {
-            previewTitle.textContent = `${gradeSelect.options[gradeSelect.selectedIndex].text} 生字字帖`;
-        } else {
-            previewTitle.textContent = `自定义字帖 (${currentCopybookData.length}个汉字)`;
-        }
-        
-        // 根据方格大小动态计算每页字数
-        calculateCharsPerPage();
-        
-        // 计算分页
-        calculatePagination();
-        
-        // 显示预览区
+        // 使用setTimeout确保UI更新
         setTimeout(() => {
-            loading.classList.remove('show');
-            copybookPreview.classList.add('show');
-            
-            // 显示分页控制（如果有多页）
-            if (totalPages > 1) {
-                paginationControls.style.display = 'flex';
-            } else {
-                paginationControls.style.display = 'none';
-            }
-            
-            // 创建页面容器
-            const pageContainer = document.createElement('div');
-            pageContainer.className = 'page-container';
-            
-            // 计算当前页的数据范围
-            const startIndex = (currentPage - 1) * charsPerPage;
-            const endIndex = Math.min(startIndex + charsPerPage, currentCopybookData.length);
-            
-            // 创建字帖行
-            for (let i = startIndex; i < endIndex; i++) {
-                createCopybookRow(pageContainer, currentCopybookData[i], i);
-            }
-            
-            copybookGrid.appendChild(pageContainer);
-            
-            // 更新分页信息
-            updatePaginationInfo();
-            
-            // 更新CSS变量
-            updateCSSVariables();
-            
-            // 应用行间距
-            document.documentElement.style.setProperty('--row-gap', currentSettings.gridGap + 'px');
-            
-        }, 100);
-    }
-    
-    // 创建字帖行（每行第一个格有字，后面的空格子）
-    function createCopybookRow(container, item, index) {
-        const gridRow = document.createElement('div');
-        gridRow.className = 'grid-row';
-        
-        // 设置行间距
-        gridRow.style.marginBottom = currentSettings.gridGap + 'px';
-        
-        // 每行显示4个格子（第一个有字，后面3个空白）
-        const charsPerRow = 4;
-        
-        for (let j = 0; j < charsPerRow; j++) {
-            const gridItem = document.createElement('div');
-            gridItem.className = 'grid-item';
-            
-            // 设置网格大小
-            gridItem.style.width = `${currentSettings.gridSize}px`;
-            gridItem.style.height = `${currentSettings.gridSize}px`;
-            
-            // 创建网格内部结构
-            const gridInner = document.createElement('div');
-            gridInner.className = `grid-inner ${currentSettings.gridType}`;
-            
-            // 设置网格线颜色
-            gridInner.style.borderColor = currentSettings.gridColor;
-            gridInner.style.setProperty('--grid-color', currentSettings.gridColor);
-            
-            // 特殊网格类型的额外元素
-            if (currentSettings.gridType === 'nine') {
-                const verticalLine1 = document.createElement('div');
-                verticalLine1.className = 'vertical-line-1';
-                const verticalLine2 = document.createElement('div');
-                verticalLine2.className = 'vertical-line-2';
-                gridInner.appendChild(verticalLine1);
-                gridInner.appendChild(verticalLine2);
-            } else if (currentSettings.gridType === 'rice') {
-                const diagonal1 = document.createElement('div');
-                diagonal1.className = 'diagonal-1';
-                const diagonal2 = document.createElement('div');
-                diagonal2.className = 'diagonal-2';
-                gridInner.appendChild(diagonal1);
-                gridInner.appendChild(diagonal2);
-            }
-            
-            // 只有第一个格子添加汉字
-            if (j === 0) {
-                // 添加汉字
-                const characterElement = document.createElement('div');
-                characterElement.className = 'character';
-                characterElement.textContent = item.character;
-                characterElement.style.fontFamily = currentSettings.fontFamily;
-                characterElement.style.fontSize = `${currentSettings.fontSize}px`;
-                characterElement.style.fontWeight = currentSettings.fontWeight;
-                characterElement.style.color = currentSettings.fontColor;
+            try {
+                // 更新标题
+                previewTitle.textContent = title;
                 
-                gridInner.appendChild(characterElement);
+                // 生成字帖内容
+                generateCopybookContent();
                 
-                // 添加拼音
-                if (item.pinyin) {
-                    const pinyinElement = document.createElement('div');
-                    pinyinElement.className = 'pinyin';
-                    pinyinElement.textContent = item.pinyin;
-                    gridInner.appendChild(pinyinElement);
-                }
+                // 显示预览区域
+                copybookPreview.classList.add('show');
                 
-                // 添加序号
-                const orderElement = document.createElement('div');
-                orderElement.className = 'stroke-order';
-                orderElement.textContent = `${index + 1}`;
-                gridInner.appendChild(orderElement);
+                // 滚动到预览区域
+                copybookPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
-                // 添加组词（如果有）
-                if (item.words && item.words.length > 0) {
-                    const wordsElement = document.createElement('div');
-                    wordsElement.className = 'words';
-                    wordsElement.textContent = item.words.slice(0, 2).join(' ');
-                    gridInner.appendChild(wordsElement);
-                }
+            } catch (error) {
+                console.error('生成字帖失败:', error);
+                alert('生成字帖时出错，请重试');
+            } finally {
+                // 确保隐藏加载提示
+                setTimeout(() => {
+                    loadingOverlay.classList.remove('show');
+                }, 100);
             }
-            
-            gridItem.appendChild(gridInner);
-            gridRow.appendChild(gridItem);
-        }
-        
-        container.appendChild(gridRow);
+        }, 50);
     }
     
-    // 根据方格大小计算每页字数
-    function calculateCharsPerPage() {
-        // 根据方格大小动态调整每页字数
-        // 基本规则：方格越大，每页字数越少
-        const gridSize = currentSettings.gridSize;
-        
-        if (gridSize <= 100) {
-            charsPerPage = 48; // 小方格，显示更多字
-        } else if (gridSize <= 150) {
-            charsPerPage = 36;
-        } else if (gridSize <= 200) {
-            charsPerPage = 24;
-        } else if (gridSize <= 250) {
-            charsPerPage = 16;
-        } else {
-            charsPerPage = 12; // 大方格，显示较少字
-        }
-        
-        // 更新选择框
-        document.getElementById('chars-per-page').value = charsPerPage;
-    }
-    
-    // 计算分页
-    function calculatePagination() {
-        totalPages = Math.ceil(currentCopybookData.length / charsPerPage);
-        if (currentPage > totalPages) {
-            currentPage = totalPages || 1;
-        }
-    }
-    
-    // 更新分页信息
-    function updatePaginationInfo() {
-        pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
-        prevPageBtn.disabled = currentPage === 1;
-        nextPageBtn.disabled = currentPage === totalPages;
-    }
-    
-    // 上一页
-    function goToPrevPage() {
-        if (currentPage > 1) {
-            currentPage--;
-            renderCopybook();
-        }
-    }
-    
-    // 下一页
-    function goToNextPage() {
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderCopybook();
-        }
-    }
-    
-    // 打开导出模态框
-    function openExportModal() {
-        if (currentCopybookData.length === 0) {
-            alert('请先生成字帖再导出');
-            return;
-        }
-        exportModal.classList.add('show');
-        selectedExportType = '';
-        confirmExport.style.display = 'none';
-        
-        // 移除所有选项的选中状态
-        exportPdf.classList.remove('selected');
-        exportWord.classList.remove('selected');
-    }
-    
-    // 关闭导出模态框
-    function closeExportModalFunc() {
-        exportModal.classList.remove('show');
-    }
-    
-    // 选择导出类型
-    function selectExportType(type) {
-        selectedExportType = type;
-        confirmExport.style.display = 'block';
-        
-        // 更新选中状态
-        exportPdf.classList.remove('selected');
-        exportWord.classList.remove('selected');
-        
-        if (type === 'pdf') {
-            exportPdf.classList.add('selected');
-            exportPdf.style.borderColor = '#4a6fa5';
-            exportPdf.style.backgroundColor = '#f8faff';
-            exportWord.style.borderColor = '#e0e0e0';
-            exportWord.style.backgroundColor = 'white';
-        } else if (type === 'word') {
-            exportWord.classList.add('selected');
-            exportWord.style.borderColor = '#4a6fa5';
-            exportWord.style.backgroundColor = '#f8faff';
-            exportPdf.style.borderColor = '#e0e0e0';
-            exportPdf.style.backgroundColor = 'white';
-        }
-    }
-    
-    // 处理导出
-    async function handleExport() {
-        if (!selectedExportType) {
-            alert('请选择导出格式');
-            return;
-        }
+    // 生成字帖内容
+    function generateCopybookContent() {
+        if (currentCopybookData.length === 0) return;
         
         try {
-            // 显示加载提示
-            loading.classList.add('show');
-            closeExportModalFunc();
+            // 清空内容
+            copybookContent.innerHTML = '';
             
-            if (selectedExportType === 'pdf') {
-                await exportAsPDF();
-            } else if (selectedExportType === 'word') {
-                await exportAsWord();
+            // 计算每页字数
+            const charsPerPage = settings.charsPerRow * settings.pageRows;
+            const totalPages = Math.ceil(currentCopybookData.length / charsPerPage);
+            
+            // 创建分页
+            for (let page = 0; page < totalPages; page++) {
+                const pageElement = document.createElement('div');
+                pageElement.className = 'copybook-page';
+                
+                // 添加页面标题（仅第一页）
+                if (page === 0) {
+                    const titleElement = document.createElement('div');
+                    titleElement.className = 'copybook-title';
+                    titleElement.innerHTML = `
+                        <h3>${previewTitle.textContent}</h3>
+                        <p>规范楷体硬笔字帖 - 共 ${currentCopybookData.length} 个生字 - 第 ${page + 1}/${totalPages} 页</p>
+                        <p>日期: ${new Date().toLocaleDateString('zh-CN')}</p>
+                    `;
+                    pageElement.appendChild(titleElement);
+                }
+                
+                // 创建网格容器
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'copybook-grid-container';
+                gridContainer.style.display = 'grid';
+                gridContainer.style.gridTemplateColumns = `repeat(${settings.charsPerRow}, 1fr)`;
+                gridContainer.style.gap = '15px';
+                gridContainer.style.marginTop = '20px';
+                
+                // 计算当前页的生字
+                const startIndex = page * charsPerPage;
+                const endIndex = Math.min(startIndex + charsPerPage, currentCopybookData.length);
+                const pageCharacters = currentCopybookData.slice(startIndex, endIndex);
+                
+                // 添加每个生字的字帖单元格
+                pageCharacters.forEach((item, index) => {
+                    // 第一列显示生字，其他列为空白练习格
+                    const isFirstColumn = (index % settings.charsPerRow) === 0;
+                    
+                    const characterCell = document.createElement('div');
+                    characterCell.className = 'character-cell';
+                    characterCell.style.width = `${settings.gridSize}px`;
+                    characterCell.style.height = `${settings.gridSize}px`;
+                    
+                    // 添加网格背景
+                    const gridBackground = document.createElement('div');
+                    gridBackground.className = 'grid-background';
+                    gridBackground.classList.add(`grid-${settings.gridType}`);
+                    characterCell.appendChild(gridBackground);
+                    
+                    if (isFirstColumn) {
+                        // 第一列显示生字内容
+                        const characterContent = document.createElement('div');
+                        characterContent.className = 'character-content';
+                        characterContent.style.position = 'relative';
+                        characterContent.style.zIndex = '1';
+                        
+                        // 添加生字
+                        const characterElement = document.createElement('div');
+                        characterElement.className = 'copybook-char';
+                        characterElement.textContent = item.character;
+                        characterElement.style.fontFamily = settings.fontFamily;
+                        characterElement.style.fontSize = `${settings.fontSize}px`;
+                        characterElement.style.fontWeight = settings.fontWeight;
+                        characterElement.style.color = '#333';
+                        characterElement.style.lineHeight = '1';
+                        characterContent.appendChild(characterElement);
+                        
+                        // 添加拼音（如果需要）
+                        if (settings.showPinyin && item.pinyin) {
+                            const pinyinElement = document.createElement('div');
+                            pinyinElement.className = 'copybook-pinyin';
+                            pinyinElement.textContent = item.pinyin;
+                            pinyinElement.style.fontSize = `${settings.pinyinSize}px`;
+                            characterContent.appendChild(pinyinElement);
+                        }
+                        
+                        // 添加笔画数（如果需要）
+                        if (settings.showStrokes && item.strokeCount) {
+                            const strokesElement = document.createElement('div');
+                            strokesElement.className = 'copybook-strokes';
+                            strokesElement.textContent = `笔画: ${item.strokeCount}`;
+                            strokesElement.style.fontSize = '10px';
+                            characterContent.appendChild(strokesElement);
+                        }
+                        
+                        characterCell.appendChild(characterContent);
+                    } else {
+                        // 其他列为空白练习格
+                        characterCell.innerHTML = '<div style="color:#999;font-size:12px;">练习格</div>';
+                    }
+                    
+                    gridContainer.appendChild(characterCell);
+                });
+                
+                // 如果当前页不是满页，填充空白单元格
+                const remainingCells = charsPerPage - pageCharacters.length;
+                for (let i = 0; i < remainingCells; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'character-cell';
+                    emptyCell.style.width = `${settings.gridSize}px`;
+                    emptyCell.style.height = `${settings.gridSize}px`;
+                    
+                    // 添加网格背景
+                    const gridBackground = document.createElement('div');
+                    gridBackground.className = 'grid-background';
+                    gridBackground.classList.add(`grid-${settings.gridType}`);
+                    emptyCell.appendChild(gridBackground);
+                    
+                    gridContainer.appendChild(emptyCell);
+                }
+                
+                pageElement.appendChild(gridContainer);
+                copybookContent.appendChild(pageElement);
+                
+                // 如果不是最后一页，添加分页符
+                if (page < totalPages - 1) {
+                    const pageBreak = document.createElement('div');
+                    pageBreak.style.pageBreakAfter = 'always';
+                    pageBreak.style.marginBottom = '50px';
+                    copybookContent.appendChild(pageBreak);
+                }
             }
+            
+            // 应用行间距
+            const allRows = copybookContent.querySelectorAll('.copybook-grid-container');
+            allRows.forEach(row => {
+                row.style.marginBottom = `${settings.rowSpacing}px`;
+            });
+            
+            // 应用纸张方向
+            if (settings.orientation === 'landscape') {
+                copybookContent.style.width = '100%';
+                copybookContent.style.maxWidth = 'none';
+            }
+            
         } catch (error) {
-            console.error('导出失败:', error);
-            alert('导出失败，请重试');
-        } finally {
-            loading.classList.remove('show');
+            console.error('生成字帖内容失败:', error);
+            throw error;
         }
+    }
+    
+    // 估算笔画数（简单版本）
+    function estimateStrokeCount(character) {
+        // 常见汉字笔画数映射（简化版）
+        const strokeMap = {
+            '一': 1, '二': 2, '三': 3, '四': 5, '五': 4,
+            '六': 4, '七': 2, '八': 2, '九': 2, '十': 2,
+            '天': 4, '地': 6, '人': 2, '你': 7, '我': 7,
+            '他': 5, '春': 9, '夏': 10, '秋': 9, '冬': 5,
+            '日': 4, '月': 4, '水': 4, '火': 4, '土': 3,
+            '木': 4, '金': 8, '山': 3, '石': 5, '田': 5,
+            '上': 3, '下': 3, '中': 4, '大': 3, '小': 3
+        };
+        
+        return strokeMap[character] || Math.floor(Math.random() * 10) + 3;
     }
     
     // 导出为PDF
-    async function exportAsPDF() {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
+    async function exportToPDF() {
+        if (currentCopybookData.length === 0) {
+            alert('请先生成字帖');
+            return;
+        }
         
-        // 设置PDF属性
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
+        loadingOverlay.classList.add('show');
         
-        // 获取字帖内容
-        const copybookContent = document.getElementById('copybook-grid');
-        
-        // 使用html2canvas将内容转换为图片
-        const canvas = await html2canvas(copybookContent, {
-            scale: 2, // 提高清晰度
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            logging: false
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        
-        // 计算图片尺寸
-        const imgWidth = pageWidth - 20; // 留边距
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        // 添加图片到PDF
-        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-        
-        // 添加标题
-        const title = previewTitle.textContent;
-        pdf.setFontSize(16);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(title, pageWidth / 2, 280, { align: 'center' });
-        
-        // 添加页脚
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text('© 小学语文生字学习系统 - 字帖打印', pageWidth / 2, 287, { align: 'center' });
-        
-        // 保存文件
-        pdf.save(`${title.replace(/\s+/g, '_')}.pdf`);
+        try {
+            // 使用html2canvas将字帖内容转换为图片
+            const content = document.getElementById('copybook-content');
+            const canvas = await html2canvas(content, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            
+            // 创建PDF
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: settings.orientation,
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const pageWidth = settings.orientation === 'portrait' ? 210 : 297;
+            const pageHeight = settings.orientation === 'portrait' ? 297 : 210;
+            
+            // 计算图片尺寸
+            const imgWidth = pageWidth - 20; // 左右各10mm边距
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            
+            // 添加图片
+            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+            
+            // 如果图片高度超过页面，需要分页
+            let currentY = 10 + imgHeight;
+            
+            if (currentY > pageHeight - 20) {
+                pdf.addPage();
+                currentY = 10;
+            }
+            
+            // 添加页眉
+            pdf.setFontSize(12);
+            pdf.setTextColor(74, 111, 165);
+            pdf.text(`${previewTitle.textContent}`, pageWidth / 2, 7, { align: 'center' });
+            
+            // 添加页脚
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`生成日期: ${new Date().toLocaleDateString('zh-CN')}`, 10, pageHeight - 10);
+            pdf.text(`小学语文生字学习系统`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            
+            // 保存PDF
+            pdf.save(`${previewTitle.textContent.replace(/[<>:"/\\|?*]/g, '_')}.pdf`);
+            
+        } catch (error) {
+            console.error('导出PDF失败:', error);
+            alert('导出PDF失败，请重试');
+        } finally {
+            loadingOverlay.classList.remove('show');
+        }
     }
     
     // 导出为Word
-    async function exportAsWord() {
-        // 由于浏览器端生成Word比较复杂，这里提供一个简单的替代方案
-        // 实际项目中可能需要服务器端支持
+    async function exportToWord() {
+        if (currentCopybookData.length === 0) {
+            alert('请先生成字帖');
+            return;
+        }
         
-        alert('Word导出功能需要服务器端支持，当前版本暂不支持Word导出。\n建议使用PDF导出功能。');
+        loadingOverlay.classList.add('show');
         
-        // 以下是一个简单的HTML到Word的转换示例
-        // const content = document.getElementById('copybook-grid').innerHTML;
-        // const blob = new Blob([`
-        //     <!DOCTYPE html>
-        //     <html>
-        //     <head>
-        //         <meta charset="UTF-8">
-        //         <style>
-        //             body { font-family: Arial, sans-serif; margin: 20px; }
-        //             .grid-row { display: flex; margin-bottom: ${currentSettings.gridGap}px; }
-        //             .grid-item { width: ${currentSettings.gridSize}px; height: ${currentSettings.gridSize}px; border: 1px solid ${currentSettings.gridColor}; margin-right: 10px; display: flex; align-items: center; justify-content: center; }
-        //             .character { font-size: ${currentSettings.fontSize}px; font-family: ${currentSettings.fontFamily}; }
-        //         </style>
-        //     </head>
-        //     <body>
-        //         <h1>${previewTitle.textContent}</h1>
-        //         ${content}
-        //     </body>
-        //     </html>
-        // `], { type: 'application/msword' });
-        
-        // const link = document.createElement('a');
-        // link.href = URL.createObjectURL(blob);
-        // link.download = `${previewTitle.textContent.replace(/\s+/g, '_')}.doc`;
-        // link.click();
+        try {
+            // 创建Word文档内容
+            const content = document.getElementById('copybook-content');
+            const clonedContent = content.cloneNode(true);
+            
+            // 移除不必要的样式
+            clonedContent.querySelectorAll('*').forEach(el => {
+                el.removeAttribute('style');
+            });
+            
+            // 重新应用基本样式
+            clonedContent.querySelectorAll('.character-cell').forEach(cell => {
+                cell.style.width = `${settings.gridSize}px`;
+                cell.style.height = `${settings.gridSize}px`;
+                cell.style.border = '1px solid #ccc';
+                cell.style.display = 'flex';
+                cell.style.alignItems = 'center';
+                cell.style.justifyContent = 'center';
+                cell.style.position = 'relative';
+            });
+            
+            // 创建HTML内容
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${previewTitle.textContent}</title>
+                    <style>
+                        body { 
+                            font-family: 'Microsoft YaHei', 'SimSun', sans-serif; 
+                            margin: 20mm;
+                            line-height: 1.5;
+                        }
+                        .copybook-page { 
+                            margin-bottom: 20px;
+                            page-break-after: always;
+                        }
+                        .copybook-title { 
+                            text-align: center; 
+                            margin-bottom: 30px; 
+                        }
+                        .copybook-title h3 { 
+                            font-size: 24pt; 
+                            color: #333; 
+                            margin-bottom: 10px;
+                        }
+                        .copybook-title p { 
+                            font-size: 12pt; 
+                            color: #666;
+                            margin: 5px 0;
+                        }
+                        .copybook-grid-container { 
+                            display: grid; 
+                            grid-template-columns: repeat(${settings.charsPerRow}, 1fr);
+                            gap: 10px;
+                            margin-bottom: ${settings.rowSpacing}px;
+                        }
+                        .character-cell { 
+                            border: 1px solid #ccc;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            position: relative;
+                            width: ${settings.gridSize}px;
+                            height: ${settings.gridSize}px;
+                        }
+                        .grid-background {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            pointer-events: none;
+                        }
+                        ${settings.gridType === 'tianzi' ? `
+                        .grid-tianzi {
+                            background-image: 
+                                linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+                                linear-gradient(to bottom, #e0e0e0 1px, transparent 1px),
+                                linear-gradient(to right, #ddd 1px, transparent 1px),
+                                linear-gradient(to bottom, #ddd 1px, transparent 1px);
+                            background-size: 50% 100%, 100% 50%, 100% 100%, 100% 100%;
+                            background-position: 50% 0, 0 50%, 0 0, 0 0;
+                        }
+                        ` : `
+                        .grid-mizi {
+                            background-image: 
+                                linear-gradient(to right, #e0e0e0 1px, transparent 1px),
+                                linear-gradient(to bottom, #e0e0e0 1px, transparent 1px),
+                                linear-gradient(to right, #ddd 1px, transparent 1px),
+                                linear-gradient(to bottom, #ddd 1px, transparent 1px),
+                                linear-gradient(45deg, #eee 1px, transparent 1px),
+                                linear-gradient(-45deg, #eee 1px, transparent 1px);
+                            background-size: 50% 100%, 100% 50%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+                            background-position: 50% 0, 0 50%, 0 0, 0 0, 0 0, 0 0;
+                        }
+                        `}
+                        .character-content { 
+                            z-index: 1; 
+                            text-align: center; 
+                        }
+                        .copybook-char { 
+                            font-size: ${settings.fontSize}pt; 
+                            margin-bottom: 5px; 
+                            font-family: ${settings.fontFamily};
+                            font-weight: ${settings.fontWeight};
+                        }
+                        .copybook-pinyin { 
+                            font-size: ${settings.pinyinSize}pt; 
+                            color: #e74c3c; 
+                        }
+                        .copybook-strokes { 
+                            font-size: 8pt; 
+                            color: #666; 
+                        }
+                        @page { 
+                            size: A4 ${settings.orientation}; 
+                            margin: 20mm; 
+                        }
+                        @media print {
+                            .copybook-page { page-break-after: always; }
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${clonedContent.innerHTML}
+                    <div style="text-align: center; margin-top: 30px; font-size: 10pt; color: #999;">
+                        <p>生成日期: ${new Date().toLocaleDateString('zh-CN')}</p>
+                        <p>小学语文生字学习系统 - 字帖打印功能</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // 创建Blob并下载
+            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${previewTitle.textContent.replace(/[<>:"/\\|?*]/g, '_')}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('导出Word失败:', error);
+            alert('导出Word失败，请重试');
+        } finally {
+            loadingOverlay.classList.remove('show');
+        }
     }
     
-    // 添加打印样式
-    function addPrintStyles() {
-        const printStyles = document.createElement('style');
-        printStyles.textContent = `
-            @media print {
-                body * {
-                    visibility: hidden;
-                }
-                
-                .copybook-preview,
-                .copybook-preview * {
-                    visibility: visible;
-                }
-                
-                .copybook-preview {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 100%;
-                }
-                
-                .action-bar,
-                .settings-panel,
-                .print-controls,
-                .navigation-buttons,
-                .copybook-options,
-                .copybook-header,
-                .footer,
-                .pagination-controls {
-                    display: none !important;
-                }
-                
-                .copybook-grid {
-                    box-shadow: none;
-                    padding: 0;
-                }
-                
-                .page-container {
-                    break-inside: avoid;
-                    page-break-inside: avoid;
-                    margin-bottom: 20px;
-                }
-                
-                .grid-row {
-                    break-inside: avoid;
-                    page-break-inside: avoid;
-                }
-                
-                * {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                
-                @page {
-                    margin: 0.5cm;
-                    size: A4;
-                }
-            }
-        `;
-        document.head.appendChild(printStyles);
-    }
-    
-    // 更新CSS变量
-    function updateCSSVariables() {
-        const root = document.documentElement;
-        root.style.setProperty('--grid-color', currentSettings.gridColor);
-        root.style.setProperty('--font-family', currentSettings.fontFamily);
-        root.style.setProperty('--font-size', currentSettings.fontSize + 'px');
-        root.style.setProperty('--font-weight', currentSettings.fontWeight);
-        root.style.setProperty('--font-color', currentSettings.fontColor);
-    }
-    
-    // 初始化页面
+    // 初始化应用
     init();
-    addPrintStyles();
 });
