@@ -1,3 +1,26 @@
+// 新增：导出功能
+document.getElementById('export-btn').addEventListener('click', async function() {
+    // 1. 使用 html2canvas 捕获字帖内容
+    const canvas = await html2canvas(document.getElementById('copybook-grid'), {
+        scale: 2, // 提高导出清晰度
+        backgroundColor: '#ffffff',
+        useCORS: true
+    });
+    
+    // 2. 转换为图片数据
+    const imgData = canvas.toDataURL('image/png');
+    
+    // 3. 使用 jsPDF 创建PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgWidth = 210; // A4纸宽度
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.save('字帖.pdf');
+});
+
+
+
 // 字帖打印页面JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     // 获取DOM元素
