@@ -1,5 +1,7 @@
 // 字帖打印页面JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('页面加载完成，开始初始化...');
+    
     // 获取DOM元素
     const gradeSelect = document.getElementById('grade-select');
     const generateBtn = document.getElementById('generate-btn');
@@ -60,12 +62,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化事件监听器
     function init() {
+        console.log('初始化事件监听器...');
+        
         // 年级选择事件
         gradeSelect.addEventListener('change', function() {
+            console.log('年级选择改变:', this.value);
             const selectedGrade = this.value;
             if (selectedGrade) {
                 loadGradeData(selectedGrade);
                 generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成字帖';
             } else {
                 characterCount.style.display = 'none';
                 generateBtn.disabled = true;
@@ -74,13 +80,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 从系统数据生成字帖
         generateBtn.addEventListener('click', function() {
+            console.log('点击生成字帖按钮，当前数据量:', currentCopybookData.length);
             if (currentCopybookData.length > 0) {
                 generateCopybookFromSystem();
+            } else {
+                alert('请先选择年级或加载数据');
             }
         });
         
         // 文件上传区域点击事件
         uploadArea.addEventListener('click', function() {
+            console.log('点击上传区域');
             excelFileInput.click();
         });
         
@@ -89,8 +99,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 从Excel生成字帖
         generateExcelBtn.addEventListener('click', function() {
+            console.log('点击从Excel生成字帖，文件数量:', excelFileInput.files.length);
             if (excelFileInput.files.length > 0) {
                 processExcelFile(excelFileInput.files[0]);
+            } else {
+                alert('请先选择Excel文件');
             }
         });
         
@@ -121,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
         gridSizeSlider.addEventListener('input', function() {
             gridSizeValue.textContent = this.value;
             settings.gridSize = parseInt(this.value);
-            updateCharsPerRow();
             if (currentCopybookData.length > 0) {
                 generateCopybookContent();
             }
@@ -223,60 +235,67 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // 根据方格大小自动调整每行字数
-        function updateCharsPerRow() {
-            const gridSize = parseInt(gridSizeSlider.value);
-            let charsPerRow;
-            
-            if (gridSize <= 70) {
-                charsPerRow = 8;
-            } else if (gridSize <= 80) {
-                charsPerRow = 6;
-            } else if (gridSize <= 90) {
-                charsPerRow = 5;
-            } else if (gridSize <= 100) {
-                charsPerRow = 4;
-            } else {
-                charsPerRow = 3;
-            }
-            
-            charsPerRowSlider.value = charsPerRow;
-            charsPerRowValue.textContent = charsPerRow;
-            settings.charsPerRow = charsPerRow;
-        }
-        
         // 加载年级数据
         loadAvailableGrades();
+        
+        console.log('事件监听器初始化完成');
     }
     
     // 加载可用的年级
     async function loadAvailableGrades() {
+        console.log('开始加载可用年级...');
         try {
             const response = await fetch('data.json');
+            if (!response.ok) {
+                throw new Error(`HTTP错误! 状态: ${response.status}`);
+            }
             const data = await response.json();
+            console.log('成功加载data.json，数据:', data);
+            
+            // 清空现有的选项（除了第一个）
+            while (gradeSelect.options.length > 1) {
+                gradeSelect.remove(1);
+            }
             
             // 填充年级选择
             const grades = data.map(item => item.grade);
+            console.log('提取的年级:', grades);
             
-            // 如果某些年级不在选择列表中，可以动态添加
             grades.forEach(grade => {
-                // 检查是否已存在
-                const existingOption = Array.from(gradeSelect.options).find(opt => opt.value === grade);
-                if (!existingOption) {
-                    const option = document.createElement('option');
-                    option.value = grade;
-                    option.textContent = grade;
-                    gradeSelect.appendChild(option);
-                }
+                const option = document.createElement('option');
+                option.value = grade;
+                option.textContent = grade;
+                gradeSelect.appendChild(option);
             });
+            
+            console.log('年级选择框已填充，选项数量:', gradeSelect.options.length);
             
         } catch (error) {
             console.error('加载年级数据失败:', error);
+            // 如果加载失败，添加一些默认选项
+            const defaultGrades = [
+                '一年级上册', '一年级下册',
+                '二年级上册', '二年级下册',
+                '三年级上册', '三年级下册',
+                '四年级上册', '四年级下册',
+                '五年级上册', '五年级下册',
+                '六年级上册', '六年级下册'
+            ];
+            
+            defaultGrades.forEach(grade => {
+                const option = document.createElement('option');
+                option.value = grade;
+                option.textContent = grade;
+                gradeSelect.appendChild(option);
+            });
+            
+            console.log('使用默认年级数据');
         }
     }
     
     // 加载年级数据
     async function loadGradeData(grade) {
+        console.log('开始加载年级数据:', grade);
         try {
             const response = await fetch('data.json');
             const data = await response.json();
@@ -297,10 +316,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 characterCount.style.display = 'block';
                 
                 console.log(`已加载 ${grade} 的 ${currentCopybookData.length} 个生字`);
+            } else {
+                console.warn(`未找到年级 ${grade} 的数据，使用示例数据`);
+                // 使用示例数据
+                currentCopybookData = [
+                    {character: "天", pinyin: "tiān", words: ["天空", "今天"], strokeCount: 4},
+                    {character: "地", pinyin: "dì", words: ["大地", "土地"], strokeCount: 6},
+                    {character: "人", pinyin: "rén", words: ["人们", "好人"], strokeCount: 2},
+                    {character: "你", pinyin: "nǐ", words: ["你好", "你们"], strokeCount: 7},
+                    {character: "我", pinyin: "wǒ", words: ["我们", "自我"], strokeCount: 7},
+                    {character: "他", pinyin: "tā", words: ["他们", "其他"], strokeCount: 5}
+                ];
+                countNumber.textContent = currentCopybookData.length;
+                characterCount.style.display = 'block';
             }
         } catch (error) {
             console.error('加载年级数据失败:', error);
-            alert('加载数据失败，请检查网络连接或data.json文件');
+            alert('加载数据失败，请检查网络连接');
         }
     }
     
@@ -308,17 +340,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFileSelect(event) {
         const file = event.target.files[0];
         if (file) {
+            console.log('选择了文件:', file.name);
             // 显示文件信息
             fileName.textContent = file.name;
             fileInfo.classList.add('show');
             
             // 启用生成按钮
             generateExcelBtn.disabled = false;
+            generateExcelBtn.innerHTML = '<i class="fas fa-magic"></i> 从Excel生成字帖';
         }
     }
     
     // 处理Excel文件
     function processExcelFile(file) {
+        console.log('开始处理Excel文件:', file.name);
         loadingOverlay.classList.add('show');
         
         const reader = new FileReader();
@@ -326,16 +361,19 @@ document.addEventListener('DOMContentLoaded', function() {
         reader.onload = function(e) {
             try {
                 const data = e.target.result;
-                console.log('开始处理Excel文件，大小:', data.length);
+                console.log('Excel文件读取成功');
                 
-                // 使用正确的读取方式
                 let workbook;
-                if (typeof data === 'string') {
-                    // 二进制字符串
-                    workbook = XLSX.read(data, { type: 'binary' });
-                } else {
-                    // ArrayBuffer
-                    workbook = XLSX.read(data, { type: 'array' });
+                // 尝试不同的读取方式
+                try {
+                    if (typeof data === 'string') {
+                        workbook = XLSX.read(data, { type: 'binary' });
+                    } else {
+                        workbook = XLSX.read(data, { type: 'array' });
+                    }
+                } catch (readError) {
+                    console.error('读取Excel失败:', readError);
+                    throw new Error('无法读取Excel文件，请确保文件格式正确');
                 }
                 
                 console.log('Excel工作表:', workbook.SheetNames);
@@ -344,64 +382,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // 转换为JSON - 使用原始模式获取所有数据
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                // 转换为JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
                 console.log('Excel数据行数:', jsonData.length);
                 
-                // 处理数据 - 找到"生字"列的索引
-                let characterColIndex = -1;
-                let pinyinColIndex = -1;
-                let wordsColIndex = -1;
-                
-                // 查找表头行
-                if (jsonData.length > 0) {
-                    const headerRow = jsonData[0];
-                    console.log('表头行:', headerRow);
-                    
-                    // 寻找包含"生字"的列
-                    for (let i = 0; i < headerRow.length; i++) {
-                        const cellValue = String(headerRow[i]).trim();
-                        if (cellValue.includes('生字') || cellValue === 'word' || cellValue === '汉字') {
-                            characterColIndex = i;
-                        } else if (cellValue.includes('拼音') || cellValue === 'pinyin') {
-                            pinyinColIndex = i;
-                        } else if (cellValue.includes('组词') || cellValue === 'words') {
-                            wordsColIndex = i;
-                        }
-                    }
-                    
-                    console.log('找到的列索引:', { characterColIndex, pinyinColIndex, wordsColIndex });
+                if (jsonData.length === 0) {
+                    throw new Error('Excel文件为空或格式不正确');
                 }
                 
                 currentCopybookData = [];
                 
-                // 从第二行开始处理数据（跳过表头）
-                for (let i = 1; i < jsonData.length; i++) {
-                    const row = jsonData[i];
-                    if (!row || row.length === 0) continue;
-                    
+                // 处理每一行数据
+                jsonData.forEach((row, index) => {
+                    // 查找"生字"列
                     let character = '';
                     
-                    // 尝试从找到的列获取生字
-                    if (characterColIndex !== -1 && row[characterColIndex]) {
-                        character = String(row[characterColIndex]).trim();
+                    // 尝试不同的列名
+                    if (row['生字'] !== undefined) {
+                        character = String(row['生字']).trim();
+                    } else if (row['word'] !== undefined) {
+                        character = String(row['word']).trim();
+                    } else if (row['汉字'] !== undefined) {
+                        character = String(row['汉字']).trim();
+                    } else if (row['字符'] !== undefined) {
+                        character = String(row['字符']).trim();
+                    } else if (row['字'] !== undefined) {
+                        character = String(row['字']).trim();
                     } else {
-                        // 如果没有找到特定列，尝试第一列
-                        character = String(row[0] || '').trim();
+                        // 如果没有找到标准列名，尝试第一列
+                        const keys = Object.keys(row);
+                        if (keys.length > 0) {
+                            character = String(row[keys[0]]).trim();
+                        }
                     }
                     
                     // 只处理非空的中文字符
                     if (character && /[\u4e00-\u9fa5]/.test(character)) {
                         // 获取拼音
                         let pinyin = '';
-                        if (pinyinColIndex !== -1 && row[pinyinColIndex]) {
-                            pinyin = String(row[pinyinColIndex]).trim();
+                        if (row['拼音'] !== undefined) {
+                            pinyin = String(row['拼音']).trim();
+                        } else if (row['pinyin'] !== undefined) {
+                            pinyin = String(row['pinyin']).trim();
                         }
                         
                         // 获取组词
                         let words = [];
-                        if (wordsColIndex !== -1 && row[wordsColIndex]) {
-                            const wordsStr = String(row[wordsColIndex]).trim();
+                        if (row['组词'] !== undefined) {
+                            const wordsStr = String(row['组词']).trim();
+                            if (wordsStr) {
+                                words = wordsStr.split(/[，,、\s]+/).filter(w => w.trim());
+                            }
+                        } else if (row['words'] !== undefined) {
+                            const wordsStr = String(row['words']).trim();
                             if (wordsStr) {
                                 words = wordsStr.split(/[，,、\s]+/).filter(w => w.trim());
                             }
@@ -413,8 +446,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             words: words,
                             strokeCount: estimateStrokeCount(character)
                         });
+                        
+                        console.log(`第${index + 1}行: 生字="${character}", 拼音="${pinyin}", 组词=${words.length}个`);
                     }
-                }
+                });
                 
                 console.log('处理完成，找到生字:', currentCopybookData.length);
                 
@@ -424,13 +459,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     generateCopybook('自定义字帖 - 生字练习');
                 } else {
                     loadingOverlay.classList.remove('show');
-                    alert('Excel文件中未找到有效的生字数据。请确保：\n1. 文件包含"生字"列\n2. 生字列包含中文字符\n3. 文件不是空的');
+                    alert('Excel文件中未找到有效的生字数据。\n\n请确保：\n1. 文件包含"生字"列\n2. 生字列包含中文字符\n3. 文件格式正确（.xlsx或.xls）');
                 }
                 
             } catch (error) {
                 console.error('处理Excel文件失败:', error);
                 loadingOverlay.classList.remove('show');
-                alert(`处理Excel文件失败: ${error.message}\n请确保文件格式正确（.xlsx或.xls）`);
+                alert(`处理Excel文件时出错：${error.message}\n\n请检查：\n1. 文件是否损坏\n2. 文件格式是否正确\n3. 是否包含"生字"列`);
             }
         };
         
@@ -440,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('读取文件失败，请重试');
         };
         
-        // 根据文件类型使用正确的读取方式
+        // 读取文件
         if (file.name.endsWith('.xlsx')) {
             reader.readAsArrayBuffer(file);
         } else {
@@ -450,7 +485,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 从系统数据生成字帖
     function generateCopybookFromSystem() {
-        if (currentCopybookData.length === 0) return;
+        if (currentCopybookData.length === 0) {
+            alert('请先选择年级');
+            return;
+        }
         
         currentSource = 'system';
         currentGrade = gradeSelect.value;
@@ -461,6 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 生成字帖
     function generateCopybook(title) {
+        console.log('开始生成字帖，标题:', title, '数据量:', currentCopybookData.length);
+        
         if (currentCopybookData.length === 0) {
             alert('没有可用的生字数据');
             return;
@@ -484,6 +524,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 滚动到预览区域
                 copybookPreview.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 
+                console.log('字帖生成完成');
+                
             } catch (error) {
                 console.error('生成字帖失败:', error);
                 alert('生成字帖时出错，请重试');
@@ -491,13 +533,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 确保隐藏加载提示
                 setTimeout(() => {
                     loadingOverlay.classList.remove('show');
-                }, 100);
+                }, 300);
             }
-        }, 50);
+        }, 100);
     }
     
     // 生成字帖内容
     function generateCopybookContent() {
+        console.log('生成字帖内容...');
         if (currentCopybookData.length === 0) return;
         
         try {
@@ -507,6 +550,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 计算每页字数
             const charsPerPage = settings.charsPerRow * settings.pageRows;
             const totalPages = Math.ceil(currentCopybookData.length / charsPerPage);
+            
+            console.log('字帖设置:', settings);
+            console.log('每页字数:', charsPerPage, '总页数:', totalPages);
             
             // 创建分页
             for (let page = 0; page < totalPages; page++) {
@@ -538,15 +584,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const endIndex = Math.min(startIndex + charsPerPage, currentCopybookData.length);
                 const pageCharacters = currentCopybookData.slice(startIndex, endIndex);
                 
+                console.log(`第${page + 1}页，生字 ${startIndex + 1}-${endIndex}，共${pageCharacters.length}个`);
+                
                 // 添加每个生字的字帖单元格
                 pageCharacters.forEach((item, index) => {
-                    // 第一列显示生字，其他列为空白练习格
-                    const isFirstColumn = (index % settings.charsPerRow) === 0;
+                    // 每行的第一个单元格显示生字，其余为空白练习格
+                    const isFirstInRow = (index % settings.charsPerRow) === 0;
                     
                     const characterCell = document.createElement('div');
                     characterCell.className = 'character-cell';
                     characterCell.style.width = `${settings.gridSize}px`;
                     characterCell.style.height = `${settings.gridSize}px`;
+                    characterCell.style.minWidth = `${settings.gridSize}px`;
+                    characterCell.style.minHeight = `${settings.gridSize}px`;
                     
                     // 添加网格背景
                     const gridBackground = document.createElement('div');
@@ -554,12 +604,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     gridBackground.classList.add(`grid-${settings.gridType}`);
                     characterCell.appendChild(gridBackground);
                     
-                    if (isFirstColumn) {
-                        // 第一列显示生字内容
+                    if (isFirstInRow) {
+                        // 每行第一个格子显示生字
                         const characterContent = document.createElement('div');
                         characterContent.className = 'character-content';
                         characterContent.style.position = 'relative';
                         characterContent.style.zIndex = '1';
+                        characterContent.style.width = '100%';
+                        characterContent.style.height = '100%';
+                        characterContent.style.display = 'flex';
+                        characterContent.style.flexDirection = 'column';
+                        characterContent.style.alignItems = 'center';
+                        characterContent.style.justifyContent = 'center';
                         
                         // 添加生字
                         const characterElement = document.createElement('div');
@@ -570,6 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         characterElement.style.fontWeight = settings.fontWeight;
                         characterElement.style.color = '#333';
                         characterElement.style.lineHeight = '1';
+                        characterElement.style.textAlign = 'center';
                         characterContent.appendChild(characterElement);
                         
                         // 添加拼音（如果需要）
@@ -578,6 +635,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             pinyinElement.className = 'copybook-pinyin';
                             pinyinElement.textContent = item.pinyin;
                             pinyinElement.style.fontSize = `${settings.pinyinSize}px`;
+                            pinyinElement.style.color = '#e74c3c';
+                            pinyinElement.style.marginTop = '2px';
                             characterContent.appendChild(pinyinElement);
                         }
                         
@@ -587,12 +646,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             strokesElement.className = 'copybook-strokes';
                             strokesElement.textContent = `笔画: ${item.strokeCount}`;
                             strokesElement.style.fontSize = '10px';
+                            strokesElement.style.color = '#666';
+                            strokesElement.style.marginTop = '2px';
                             characterContent.appendChild(strokesElement);
                         }
                         
                         characterCell.appendChild(characterContent);
                     } else {
-                        // 其他列为空白练习格
+                        // 其他格子为空白练习格
                         characterCell.innerHTML = '<div style="color:#999;font-size:12px;">练习格</div>';
                     }
                     
@@ -613,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     gridBackground.classList.add(`grid-${settings.gridType}`);
                     emptyCell.appendChild(gridBackground);
                     
+                    emptyCell.innerHTML = '<div style="color:#999;font-size:12px;">练习格</div>';
                     gridContainer.appendChild(emptyCell);
                 }
                 
@@ -634,11 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.style.marginBottom = `${settings.rowSpacing}px`;
             });
             
-            // 应用纸张方向
-            if (settings.orientation === 'landscape') {
-                copybookContent.style.width = '100%';
-                copybookContent.style.maxWidth = 'none';
-            }
+            console.log('字帖内容生成完成');
             
         } catch (error) {
             console.error('生成字帖内容失败:', error);
@@ -648,7 +706,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 估算笔画数（简单版本）
     function estimateStrokeCount(character) {
-        // 常见汉字笔画数映射（简化版）
+        // 常见汉字笔画数映射
         const strokeMap = {
             '一': 1, '二': 2, '三': 3, '四': 5, '五': 4,
             '六': 4, '七': 2, '八': 2, '九': 2, '十': 2,
@@ -656,7 +714,8 @@ document.addEventListener('DOMContentLoaded', function() {
             '他': 5, '春': 9, '夏': 10, '秋': 9, '冬': 5,
             '日': 4, '月': 4, '水': 4, '火': 4, '土': 3,
             '木': 4, '金': 8, '山': 3, '石': 5, '田': 5,
-            '上': 3, '下': 3, '中': 4, '大': 3, '小': 3
+            '上': 3, '下': 3, '中': 4, '大': 3, '小': 3,
+            '学': 8, '生': 5, '字': 6, '文': 4, '语': 9
         };
         
         return strokeMap[character] || Math.floor(Math.random() * 10) + 3;
@@ -691,23 +750,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 format: 'a4'
             });
             
-            const pageWidth = settings.orientation === 'portrait' ? 210 : 297;
-            const pageHeight = settings.orientation === 'portrait' ? 297 : 210;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
             
             // 计算图片尺寸
             const imgWidth = pageWidth - 20; // 左右各10mm边距
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
             // 添加图片
-            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-            
-            // 如果图片高度超过页面，需要分页
-            let currentY = 10 + imgHeight;
-            
-            if (currentY > pageHeight - 20) {
-                pdf.addPage();
-                currentY = 10;
-            }
+            let currentY = 10;
+            pdf.addImage(imgData, 'PNG', 10, currentY, imgWidth, imgHeight);
+            currentY += imgHeight + 10;
             
             // 添加页眉
             pdf.setFontSize(12);
@@ -721,7 +774,10 @@ document.addEventListener('DOMContentLoaded', function() {
             pdf.text(`小学语文生字学习系统`, pageWidth / 2, pageHeight - 10, { align: 'center' });
             
             // 保存PDF
-            pdf.save(`${previewTitle.textContent.replace(/[<>:"/\\|?*]/g, '_')}.pdf`);
+            const fileName = `${previewTitle.textContent.replace(/[<>:"/\\|?*]/g, '_')}.pdf`;
+            pdf.save(fileName);
+            
+            console.log('PDF导出成功:', fileName);
             
         } catch (error) {
             console.error('导出PDF失败:', error);
@@ -742,26 +798,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // 创建Word文档内容
-            const content = document.getElementById('copybook-content');
-            const clonedContent = content.cloneNode(true);
-            
-            // 移除不必要的样式
-            clonedContent.querySelectorAll('*').forEach(el => {
-                el.removeAttribute('style');
-            });
-            
-            // 重新应用基本样式
-            clonedContent.querySelectorAll('.character-cell').forEach(cell => {
-                cell.style.width = `${settings.gridSize}px`;
-                cell.style.height = `${settings.gridSize}px`;
-                cell.style.border = '1px solid #ccc';
-                cell.style.display = 'flex';
-                cell.style.alignItems = 'center';
-                cell.style.justifyContent = 'center';
-                cell.style.position = 'relative';
-            });
-            
-            // 创建HTML内容
             const htmlContent = `
                 <!DOCTYPE html>
                 <html>
@@ -773,10 +809,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             font-family: 'Microsoft YaHei', 'SimSun', sans-serif; 
                             margin: 20mm;
                             line-height: 1.5;
-                        }
-                        .copybook-page { 
-                            margin-bottom: 20px;
-                            page-break-after: always;
                         }
                         .copybook-title { 
                             text-align: center; 
@@ -800,12 +832,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         .character-cell { 
                             border: 1px solid #ccc;
+                            width: ${settings.gridSize}px;
+                            height: ${settings.gridSize}px;
+                            position: relative;
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            position: relative;
-                            width: ${settings.gridSize}px;
-                            height: ${settings.gridSize}px;
                         }
                         .grid-background {
                             position: absolute;
@@ -839,13 +871,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         `}
                         .character-content { 
-                            z-index: 1; 
                             text-align: center; 
+                            z-index: 1;
                         }
                         .copybook-char { 
                             font-size: ${settings.fontSize}pt; 
                             margin-bottom: 5px; 
-                            font-family: ${settings.fontFamily};
+                            font-family: ${settings.fontFamily.replace(/'/g, '')};
                             font-weight: ${settings.fontWeight};
                         }
                         .copybook-pinyin { 
@@ -860,14 +892,53 @@ document.addEventListener('DOMContentLoaded', function() {
                             size: A4 ${settings.orientation}; 
                             margin: 20mm; 
                         }
-                        @media print {
-                            .copybook-page { page-break-after: always; }
-                            body { margin: 0; }
-                        }
                     </style>
                 </head>
                 <body>
-                    ${clonedContent.innerHTML}
+                    <div class="copybook-title">
+                        <h3>${previewTitle.textContent}</h3>
+                        <p>规范楷体硬笔字帖 - 共 ${currentCopybookData.length} 个生字</p>
+                        <p>日期: ${new Date().toLocaleDateString('zh-CN')}</p>
+                    </div>
+                    
+                    ${currentCopybookData.map((item, index) => {
+                        const isFirstInRow = (index % settings.charsPerRow) === 0;
+                        if (isFirstInRow) {
+                            // 每行的开始，需要先关闭上一行（如果有）并开始新行
+                            const rowStart = Math.floor(index / settings.charsPerRow) * settings.charsPerRow;
+                            const rowData = currentCopybookData.slice(rowStart, rowStart + settings.charsPerRow);
+                            
+                            return `
+                                <div class="copybook-grid-container">
+                                    ${rowData.map((rowItem, rowIndex) => {
+                                        if (rowIndex === 0) {
+                                            // 第一个格子显示生字
+                                            return `
+                                                <div class="character-cell">
+                                                    <div class="grid-background grid-${settings.gridType}"></div>
+                                                    <div class="character-content">
+                                                        <div class="copybook-char">${rowItem.character}</div>
+                                                        ${settings.showPinyin && rowItem.pinyin ? `<div class="copybook-pinyin">${rowItem.pinyin}</div>` : ''}
+                                                        ${settings.showStrokes && rowItem.strokeCount ? `<div class="copybook-strokes">笔画: ${rowItem.strokeCount}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        } else {
+                                            // 其他格子为空白
+                                            return `
+                                                <div class="character-cell">
+                                                    <div class="grid-background grid-${settings.gridType}"></div>
+                                                    <div style="color:#999;font-size:12px;">练习格</div>
+                                                </div>
+                                            `;
+                                        }
+                                    }).join('')}
+                                </div>
+                            `;
+                        }
+                        return '';
+                    }).join('')}
+                    
                     <div style="text-align: center; margin-top: 30px; font-size: 10pt; color: #999;">
                         <p>生成日期: ${new Date().toLocaleDateString('zh-CN')}</p>
                         <p>小学语文生字学习系统 - 字帖打印功能</p>
@@ -886,6 +957,8 @@ document.addEventListener('DOMContentLoaded', function() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            
+            console.log('Word导出成功');
             
         } catch (error) {
             console.error('导出Word失败:', error);
