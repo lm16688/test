@@ -11,35 +11,6 @@ function waitForDOMReady() {
     });
 }
 
-// 等待特定元素加载
-function waitForElement(selector, timeout = 5000) {
-    return new Promise((resolve, reject) => {
-        const element = document.querySelector(selector);
-        if (element) {
-            resolve(element);
-            return;
-        }
-
-        const observer = new MutationObserver(() => {
-            const element = document.querySelector(selector);
-            if (element) {
-                observer.disconnect();
-                resolve(element);
-            }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
-        setTimeout(() => {
-            observer.disconnect();
-            reject(new Error(`元素 ${selector} 未在 ${timeout}ms 内加载`));
-        }, timeout);
-    });
-}
-
 // 主函数
 async function main() {
     console.log('开始初始化字帖打印页面...');
@@ -49,8 +20,9 @@ async function main() {
         await waitForDOMReady();
         console.log('DOM已加载');
         
-        // 获取DOM元素 - 添加null检查
+        // 获取DOM元素 - 根据你的HTML实际ID
         const elements = {
+            // 左侧选项区域
             gradeSelect: document.getElementById('grade-select'),
             generateBtn: document.getElementById('generate-btn'),
             characterCount: document.getElementById('character-count'),
@@ -60,13 +32,18 @@ async function main() {
             fileInfo: document.getElementById('file-info'),
             fileName: document.getElementById('file-name'),
             generateExcelBtn: document.getElementById('generate-excel-btn'),
+            
+            // 字帖预览区域
             copybookPreview: document.getElementById('copybook-preview'),
             previewTitle: document.getElementById('preview-title'),
-            copybookContent: document.getElementById('copybook-content'),
+            copybookGrid: document.getElementById('copybook-grid'),
+            
+            // 控制按钮
             printBtn: document.getElementById('print-btn'),
             exportPdfBtn: document.getElementById('export-pdf-btn'),
             exportWordBtn: document.getElementById('export-word-btn'),
             loadingOverlay: document.getElementById('loading-overlay'),
+            
             // 设置面板元素
             gridSizeSlider: document.getElementById('grid-size-slider'),
             gridSizeValue: document.getElementById('grid-size-value'),
@@ -84,21 +61,15 @@ async function main() {
         };
         
         // 检查必要的元素是否存在
-        const requiredElements = ['gradeSelect', 'generateBtn', 'copybookContent'];
+        const requiredElements = ['gradeSelect', 'generateBtn', 'copybookGrid'];
         for (const elementName of requiredElements) {
             if (!elements[elementName]) {
                 console.error(`未找到必要元素: ${elementName}`);
-                // 等待一下再重试
-                await new Promise(resolve => setTimeout(resolve, 100));
-                // 重新获取元素
-                elements[elementName] = document.getElementById(elementName.toLowerCase().replace(/([A-Z])/g, '-$1').toLowerCase());
-                if (!elements[elementName]) {
-                    throw new Error(`无法找到元素: ${elementName}`);
-                }
+                throw new Error(`无法找到元素: ${elementName}`);
             }
         }
         
-        console.log('所有DOM元素已找到');
+        console.log('所有必要DOM元素已找到');
         
         // 当前字帖数据
         let currentCopybookData = [];
@@ -134,7 +105,9 @@ async function main() {
                     elements.generateBtn.disabled = false;
                     elements.generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成字帖';
                 } else {
-                    elements.characterCount.style.display = 'none';
+                    if (elements.characterCount) {
+                        elements.characterCount.style.display = 'none';
+                    }
                     elements.generateBtn.disabled = true;
                 }
             });
@@ -153,7 +126,9 @@ async function main() {
             if (elements.uploadArea) {
                 elements.uploadArea.addEventListener('click', function() {
                     console.log('点击上传区域');
-                    elements.excelFileInput.click();
+                    if (elements.excelFileInput) {
+                        elements.excelFileInput.click();
+                    }
                 });
             }
             
@@ -165,7 +140,7 @@ async function main() {
             // 从Excel生成字帖
             if (elements.generateExcelBtn) {
                 elements.generateExcelBtn.addEventListener('click', function() {
-                    console.log('点击从Excel生成字帖，文件数量:', elements.excelFileInput?.files?.length);
+                    console.log('点击从Excel生成字帖');
                     if (elements.excelFileInput && elements.excelFileInput.files.length > 0) {
                         processExcelFile(elements.excelFileInput.files[0]);
                     } else {
@@ -685,19 +660,18 @@ async function main() {
             
             try {
                 // 清空内容
-                if (elements.copybookContent) {
-                    elements.copybookContent.innerHTML = '';
-                } else {
-                    console.error('copybookContent元素未找到');
-                    return;
-                }
+                elements.copybookGrid.innerHTML = '';
+                
+                // 创建字帖内容容器
+                const copybookContainer = document.createElement('div');
+                copybookContainer.className = 'copybook-content';
+                copybookContainer.style.padding = '20px';
+                copybookContainer.style.backgroundColor = '#fff';
+                copybookContainer.style.borderRadius = '8px';
                 
                 // 计算每页字数
                 const charsPerPage = settings.charsPerRow * settings.pageRows;
                 const totalPages = Math.ceil(currentCopybookData.length / charsPerPage);
-                
-                console.log('字帖设置:', settings);
-                console.log('每页字数:', charsPerPage, '总页数:', totalPages);
                 
                 // 创建分页
                 for (let page = 0; page < totalPages; page++) {
@@ -738,8 +712,6 @@ async function main() {
                         characterCell.className = 'character-cell';
                         characterCell.style.width = `${settings.gridSize}px`;
                         characterCell.style.height = `${settings.gridSize}px`;
-                        characterCell.style.minWidth = `${settings.gridSize}px`;
-                        characterCell.style.minHeight = `${settings.gridSize}px`;
                         
                         // 添加网格背景
                         const gridBackground = document.createElement('div');
@@ -822,22 +794,25 @@ async function main() {
                     }
                     
                     pageElement.appendChild(gridContainer);
-                    elements.copybookContent.appendChild(pageElement);
+                    copybookContainer.appendChild(pageElement);
                     
                     // 如果不是最后一页，添加分页符
                     if (page < totalPages - 1) {
                         const pageBreak = document.createElement('div');
                         pageBreak.style.pageBreakAfter = 'always';
                         pageBreak.style.marginBottom = '50px';
-                        elements.copybookContent.appendChild(pageBreak);
+                        copybookContainer.appendChild(pageBreak);
                     }
                 }
                 
                 // 应用行间距
-                const allRows = elements.copybookContent.querySelectorAll('.copybook-grid-container');
+                const allRows = copybookContainer.querySelectorAll('.copybook-grid-container');
                 allRows.forEach(row => {
                     row.style.marginBottom = `${settings.rowSpacing}px`;
                 });
+                
+                // 添加内容到页面
+                elements.copybookGrid.appendChild(copybookContainer);
                 
                 console.log('字帖内容生成完成');
                 
@@ -877,8 +852,8 @@ async function main() {
             
             try {
                 // 使用html2canvas将字帖内容转换为图片
-                const content = elements.copybookContent;
-                const canvas = await html2canvas(content, {
+                const contentElement = elements.copybookGrid.querySelector('.copybook-content') || elements.copybookGrid;
+                const canvas = await html2canvas(contentElement, {
                     scale: 2,
                     useCORS: true,
                     backgroundColor: '#ffffff',
@@ -908,7 +883,8 @@ async function main() {
                 // 添加页眉
                 pdf.setFontSize(12);
                 pdf.setTextColor(74, 111, 165);
-                pdf.text(`${elements.previewTitle ? elements.previewTitle.textContent : '字帖'}`, pageWidth / 2, 7, { align: 'center' });
+                const title = elements.previewTitle ? elements.previewTitle.textContent : '字帖';
+                pdf.text(title, pageWidth / 2, 7, { align: 'center' });
                 
                 // 添加页脚
                 pdf.setFontSize(10);
@@ -917,7 +893,6 @@ async function main() {
                 pdf.text(`小学语文生字学习系统`, pageWidth / 2, pageHeight - 10, { align: 'center' });
                 
                 // 保存PDF
-                const title = elements.previewTitle ? elements.previewTitle.textContent : '字帖';
                 const fileName = `${title.replace(/[<>:"/\\|?*]/g, '_')}.pdf`;
                 pdf.save(fileName);
                 
@@ -1068,7 +1043,13 @@ async function main() {
         errorMsg.innerHTML = `
             <h3>页面初始化失败</h3>
             <p>错误: ${error.message}</p>
-            <p>请尝试刷新页面或检查控制台获取更多信息</p>
+            <p>请检查HTML中是否存在以下元素：</p>
+            <ul>
+                <li>grade-select (年级选择)</li>
+                <li>generate-btn (生成字帖按钮)</li>
+                <li>copybook-grid (字帖网格容器)</li>
+            </ul>
+            <p>请刷新页面或检查控制台获取更多信息</p>
         `;
         document.body.insertBefore(errorMsg, document.body.firstChild);
     }
