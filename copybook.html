@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>字帖生成系统</title>
@@ -12,6 +13,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
 <!-- 在现有的CSS中添加以下样式 -->
+
+/* 移动端触摸优化 */
+@media (max-width: 768px) {
+    button, 
+    .action-btn, 
+    .nav-link, 
+    .grid-type-option,
+    .color-option,
+    .upload-input {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    /* 防止双击缩放 */
+    button, .action-btn {
+        touch-action: manipulation;
+    }
+    
+    /* 优化滚动体验 */
+    .settings-panel, .copybook-preview {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* 修复iOS Safari上的按钮样式 */
+    input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+    }
+}
     /* 更新设置面板样式，使其可滚动 */
     .settings-panel {
         width: 320px;
@@ -1187,7 +1221,17 @@
     }
 
     // 下载为PDF - 修复中文乱码问题
+// 在 downloadAsPDF 函数之前添加这个辅助函数
+function getValidFileName(text) {
+    if (!text) return '字帖';
+    return text
+        .replace(/[<>:"/\\|?*]/g, '_') // 移除非法字符
+        .replace(/\s+/g, '_')           // 空格替换为下划线
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '') // 只保留中文、英文、数字和下划线
+        .substring(0, 50) || '字帖';    // 限制长度
+}
     // 下载为PDF - 简化版本，确保中文显示
+// 下载为PDF - 修复版本
 async function downloadAsPDF() {
     if (currentCharacters.length === 0) {
         showError('请先生成字帖');
@@ -1221,7 +1265,8 @@ async function downloadAsPDF() {
         const canvas = await html2canvas(copybookContent, {
             scale: 2, // 提高分辨率
             useCORS: true,
-            backgroundColor: '#ffffff'
+            backgroundColor: '#ffffff',
+            logging: true
         });
         
         // 恢复原始显示状态
@@ -1247,7 +1292,7 @@ async function downloadAsPDF() {
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         
         // 添加图片到PDF
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         pdf.addImage(imgData, 'JPEG', 20, 20, imgWidth, imgHeight);
         
         // 添加标题和页脚
@@ -1268,63 +1313,11 @@ async function downloadAsPDF() {
     } catch (error) {
         console.error('PDF生成失败:', error);
         showError('PDF生成失败: ' + error.message);
-        
-        // 如果图片方式失败，尝试使用纯文本方式
-        try {
-            await downloadAsPDFTextOnly();
-        } catch (error2) {
-            showError('两种PDF生成方式都失败了，请检查浏览器控制台');
-        }
     } finally {
         hideLoading();
     }
 }
 
-// 纯文本方式生成PDF（备用）
-async function downloadAsPDFTextOnly() {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
-    
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
-    
-    // 添加标题
-    pdf.setFontSize(18);
-    pdf.setTextColor(74, 111, 165);
-    pdf.text(previewTitle.textContent, pageWidth / 2, margin, { align: 'center' });
-    
-    // 添加生字列表
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    
-    let yPos = margin + 15;
-    const charsPerLine = 20;
-    
-    for (let i = 0; i < currentCharacters.length; i++) {
-        if (i > 0 && i % charsPerLine === 0) {
-            yPos += 8;
-            
-            // 检查是否需要新页面
-            if (yPos > pageHeight - margin) {
-                pdf.addPage();
-                yPos = margin;
-            }
-        }
-        
-        const char = currentCharacters[i];
-        const xPos = margin + (i % charsPerLine) * 8;
-        pdf.text(char, xPos, yPos);
-    }
-    
-    // 添加统计信息
-    pdf.setFontSize(10);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(`共 ${currentCharacters.length} 个生字`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-    
-    const fileName = getValidFileName(previewTitle.textContent) + '_列表.pdf';
-    pdf.save(fileName);
-}
 
     // 辅助函数：将十六进制颜色转换为RGB
     function hexToRgb(hex) {
