@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 在现有script引用后面添加 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
 <!-- 在现有的script引用后面添加 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -1237,9 +1239,9 @@ function getValidFileName(text) {
         .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '') // 只保留中文、英文、数字和下划线
         .substring(0, 50) || '字帖';    // 限制长度
 }
-    // 下载为PDF - 简化版本，确保中文显示
-// 下载为PDF - 修复版本
+   
 // 下载为PDF - 使用中文字体支持
+// 下载为PDF - 使用html2pdf库（支持中文）
 async function downloadAsPDF() {
     if (currentCharacters.length === 0) {
         showError('请先生成字帖');
@@ -1249,162 +1251,137 @@ async function downloadAsPDF() {
     showLoading();
     
     try {
-        const { jsPDF } = window.jspdf;
+        // 获取字帖内容元素
+        const element = document.getElementById('copybook-content');
         
-        // 创建一个新的PDF文档
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
+        // 临时隐藏不需要的元素
+        const previewControls = document.querySelector('.preview-controls');
+        const previewFooter = document.querySelector('.preview-footer');
+        const originalControlsDisplay = previewControls.style.display;
+        const originalFooterDisplay = previewFooter.style.display;
+        
+        previewControls.style.display = 'none';
+        previewFooter.style.display = 'none';
+        
+        // 显示所有页面
+        const allPages = document.querySelectorAll('.grid-page');
+        const originalDisplays = [];
+        allPages.forEach(page => {
+            originalDisplays.push(page.style.display);
+            page.style.display = 'block';
         });
         
-        // 页面尺寸
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        
-        // 边距
-        const margin = 15;
-        const headerHeight = 20;
-        
-        // 网格参数 - 每行8格，每页10行
-        const rowsPerPage = 10;
-        const colsPerPage = 8;
-        const cellSize = 20; // 20mm x 20mm
-        
-        // 网格起始位置
-        const gridWidth = cellSize * colsPerPage;
-        const gridHeight = cellSize * rowsPerPage;
-        const startX = (pageWidth - gridWidth) / 2;
-        const startY = margin + headerHeight;
-        
-        // 总页数
-        const totalPagesPDF = Math.ceil(currentCharacters.length / rowsPerPage);
-        
-        console.log(`开始生成PDF，总页数: ${totalPagesPDF}`);
-        
-        // 设置默认字体为支持中文的字体
-        pdf.setFont('helvetica');
-        
-        for (let pageNum = 1; pageNum <= totalPagesPDF; pageNum++) {
-            if (pageNum > 1) {
-                pdf.addPage();
+        // 配置html2pdf选项
+        const opt = {
+            margin: [10, 10, 10, 10], // 上右下左边距（毫米）
+            filename: getValidFileName(previewTitle.textContent) + '.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 3, // 提高分辨率
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+                letterRendering: true // 启用字母渲染优化
+            },
+            jsPDF: { 
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait',
+                compress: true
             }
-            
-            // 添加页面标题 - 使用文本数组方式处理中文
-            pdf.setFontSize(16);
-            pdf.setTextColor(74, 111, 165);
-            
-            const title = pageNum === 1 ? 
-                previewTitle.textContent : 
-                previewTitle.textContent + ` (第${pageNum}页)`;
-            
-            // 使用splitTextToSize处理长文本
-            const titleLines = pdf.splitTextToSize(title, pageWidth - 2 * margin);
-            pdf.text(titleLines, pageWidth / 2, margin, { align: 'center' });
-            
-            // 当前页的生字
-            const startIndex = (pageNum - 1) * rowsPerPage;
-            const endIndex = Math.min(startIndex + rowsPerPage, currentCharacters.length);
-            const pageCharacters = currentCharacters.slice(startIndex, endIndex);
-            
-            console.log(`第${pageNum}页: ${pageCharacters.length}个生字`);
-            
-            // 绘制网格
-            pdf.setDrawColor(180, 180, 180);
-            pdf.setLineWidth(0.3);
-            
-            for (let row = 0; row < rowsPerPage; row++) {
-                for (let col = 0; col < colsPerPage; col++) {
-                    const x = startX + col * cellSize;
-                    const y = startY + row * cellSize;
-                    
-                    // 绘制单元格边框
-                    pdf.rect(x, y, cellSize, cellSize);
-                    
-                    // 绘制辅助线
-                    pdf.setDrawColor(220, 220, 220);
-                    pdf.setLineWidth(0.1);
-                    
-                    // 垂直线
-                    pdf.line(x + cellSize / 2, y, x + cellSize / 2, y + cellSize);
-                    
-                    // 水平线
-                    pdf.line(x, y + cellSize / 2, x + cellSize, y + cellSize / 2);
-                    
-                    // 如果是米字格，绘制对角线
-                    if (currentSettings.gridType === 'mi') {
-                        pdf.line(x, y, x + cellSize, y + cellSize);
-                        pdf.line(x + cellSize, y, x, y + cellSize);
-                    }
-                    
-                    pdf.setDrawColor(180, 180, 180);
-                    pdf.setLineWidth(0.3);
-                    
-                    // 在第一列添加生字
-                    if (col === 0 && row < pageCharacters.length) {
-                        const character = pageCharacters[row];
-                        
-                        // 设置字体大小
-                        const fontSize = Math.min(currentSettings.fontSize / 3, 12);
-                        pdf.setFontSize(fontSize);
-                        
-                        // 设置字体颜色
-                        const color = hexToRgb(currentSettings.fontColor);
-                        pdf.setTextColor(color.r, color.g, color.b);
-                        
-                        // 添加生字
-                        const textX = x + cellSize / 2;
-                        const textY = y + cellSize / 2;
-                        
-                        // 直接输出字符，jsPDF会自动处理
-                        pdf.text(character, textX, textY, {
-                            align: 'center',
-                            baseline: 'middle'
-                        });
-                    }
-                }
-            }
-            
-            // 添加页码
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text(`第 ${pageNum} 页 / 共 ${totalPagesPDF} 页`, 
-                    pageWidth / 2, pageHeight - margin, 
-                    { align: 'center' });
-            
-            // 添加本页生字列表
-            pdf.setFontSize(10);
-            pdf.setTextColor(74, 111, 165);
-            pdf.text('本页生字:', startX - 25, startY);
-            
-            pdf.setFontSize(11);
-            pdf.setTextColor(50, 50, 50);
-            
-            // 显示本页所有生字
-            for (let i = 0; i < pageCharacters.length; i++) {
-                const char = pageCharacters[i];
-                const yPos = startY + 5 + (i * 5);
-                pdf.text(`${i+1}. ${char}`, startX - 25, yPos);
-            }
-        }
+        };
         
-        // 保存PDF
-        const fileName = getValidFileName(previewTitle.textContent) + '.pdf';
-        pdf.save(fileName);
+        // 使用html2pdf生成PDF
+        await html2pdf().set(opt).from(element).save();
+        
+        // 恢复原始显示状态
+        previewControls.style.display = originalControlsDisplay;
+        previewFooter.style.display = originalFooterDisplay;
+        allPages.forEach((page, index) => {
+            page.style.display = originalDisplays[index] || page.classList.contains('active') ? 'block' : 'none';
+        });
         
         showSuccess('PDF下载成功！');
         
     } catch (error) {
         console.error('PDF生成失败:', error);
         showError('PDF生成失败: ' + error.message);
+        
+        // 如果html2pdf失败，尝试备用方案
+        try {
+            await downloadAsPDFBackup();
+        } catch (backupError) {
+            showError('两种PDF生成方式都失败了');
+        }
     } finally {
         hideLoading();
     }
 }
 
+// 备用PDF生成方案（如果html2pdf失败）
+async function downloadAsPDFBackup() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+    
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    
+    // 添加标题
+    pdf.setFontSize(18);
+    pdf.setTextColor(74, 111, 165);
+    
+    // 使用splitTextToSize处理中文标题
+    const title = previewTitle.textContent;
+    const titleLines = pdf.splitTextToSize(title, pageWidth - 2 * margin);
+    pdf.text(titleLines, pageWidth / 2, margin, { align: 'center' });
+    
+    // 添加生字列表（纯文本方式）
+    pdf.setFontSize(14);
+    pdf.setTextColor(0, 0, 0);
+    
+    let yPos = margin + 20;
+    const charsPerLine = 20;
+    
+    for (let i = 0; i < currentCharacters.length; i++) {
+        if (i > 0 && i % charsPerLine === 0) {
+            yPos += 8;
+            
+            // 检查是否需要新页面
+            if (yPos > pageHeight - margin) {
+                pdf.addPage();
+                yPos = margin;
+            }
+        }
+        
+        const char = currentCharacters[i];
+        const xPos = margin + (i % charsPerLine) * 8;
+        
+        // 添加序号
+        pdf.setFontSize(10);
+        pdf.text(`${i+1}.`, xPos - 6, yPos);
+        
+        // 添加生字
+        pdf.setFontSize(14);
+        pdf.text(char, xPos, yPos);
+    }
+    
+    // 添加统计信息
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    const date = new Date().toLocaleDateString('zh-CN');
+    const footerText = `共 ${currentCharacters.length} 个生字 - 生成时间: ${date}`;
+    pdf.text(footerText, pageWidth / 2, pageHeight - 10, { align: 'center' });
+    
+    const fileName = getValidFileName(previewTitle.textContent) + '_列表.pdf';
+    pdf.save(fileName);
+}
 
-
-
+        
     // 辅助函数：将十六进制颜色转换为RGB
     function hexToRgb(hex) {
         // 移除#号
