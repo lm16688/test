@@ -644,34 +644,52 @@
                 flex-direction: column;
             }
         }
-        @media print {
-  /* 控制分页行为 */
-  .page-break {
-    page-break-before: always;
-    page-break-after: always;
-    page-break-inside: avoid;
+
+
+        /* print.css */
+@media print {
+  * {
+    box-sizing: border-box;
   }
   
-  /* 防止内容被分割 */
-  .no-break {
+  body {
+    width: 100% !important;
+    max-width: 210mm !important; /* A4宽度 */
+    margin: 0 auto !important;
+    padding: 0 !important;
+    font-size: 12pt !important;
+  }
+  
+  .container {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  /* 隐藏不需要打印的元素 */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* 确保图片不溢出 */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* 表格优化 */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    word-wrap: break-word !important;
+  }
+  
+  /* 长内容分页控制 */
+  .long-content {
+    -webkit-column-break-inside: avoid;
     page-break-inside: avoid;
     break-inside: avoid;
-  }
-  
-  /* 确保元素不被分割 */
-  table, figure, img, div.section {
-    page-break-inside: avoid;
-  }
-  
-  /* 分页前后的间距控制 */
-  h1, h2, h3 {
-    page-break-after: avoid;
-  }
-  
-  /* 设置PDF页面尺寸 */
-  @page {
-    size: A4; /* 或 letter, legal, A3 等 */
-    margin: 20mm 15mm; /* 调整边距 */
   }
 }
 
