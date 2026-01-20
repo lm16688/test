@@ -12,11 +12,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- 在现有script引用后面添加 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">>
     
 <!-- 在现有的script引用后面添加 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js">>
 <!-- 添加中文字体支持 -->
 <script src="https://unpkg.com/jspdf-customfonts@latest/dist/default_vfs.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.umd.min.js"></script>
@@ -1737,7 +1737,151 @@ async function switchToPDFMode() {
             }
         });
     }
+
+        // 创建固定尺寸的PDF容器
+function createPDFContainer() {
+    // 创建固定尺寸的容器
+    const pdfContainer = document.createElement('div');
+    pdfContainer.id = 'pdf-container';
+    pdfContainer.style.cssText = `
+        position: fixed;
+        top: -9999px;
+        left: -9999px;
+        width: 794px;  // A4宽度(210mm)在96dpi下的像素值
+        min-height: 1123px; // A4高度(297mm)
+        background: white;
+        padding: 20px;
+        box-sizing: border-box;
+        z-index: -9999;
+        opacity: 0;
+    `;
     
+    // 将PDF容器添加到页面
+    document.body.appendChild(pdfContainer);
+    return pdfContainer;
+}
+
+// 复制字帖内容到PDF容器
+function copyToPDFContainer() {
+    const pdfContainer = document.getElementById('pdf-container') || createPDFContainer();
+    const originalContent = document.getElementById('copybook-content');
+    
+    // 清空PDF容器
+    pdfContainer.innerHTML = '';
+    
+    // 显示所有页面
+    const allPages = document.querySelectorAll('.grid-page');
+    
+    // 复制每个页面到PDF容器
+    allPages.forEach((page, pageIndex) => {
+        const pageClone = page.cloneNode(true);
+        
+        // 设置页面样式
+        pageClone.style.cssText = `
+            width: 100% !important;
+            min-height: calc(1123px - 40px) !important;
+            margin-bottom: 20px !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            background: white !important;
+        `;
+        
+        // 调整网格行
+        const gridRows = pageClone.querySelectorAll('.grid-row');
+        const strokeRows = pageClone.querySelectorAll('.stroke-order-row');
+        
+        // 计算每个格子的宽度 (794px - 40px padding) / 8 = 94.25px
+        const cellWidth = 94;
+        
+        // 调整笔顺行
+        strokeRows.forEach(row => {
+            row.style.width = '100%';
+            row.style.display = 'flex';
+            row.style.marginBottom = '5px';
+            
+            const strokeCells = row.querySelectorAll('.stroke-order-cell');
+            strokeCells.forEach((cell, colIndex) => {
+                cell.style.width = `${cellWidth}px`;
+                cell.style.height = '25px';
+                cell.style.fontSize = '12px';
+                cell.style.textAlign = 'center';
+                cell.style.lineHeight = '25px';
+                cell.style.overflow = 'hidden';
+                cell.style.whiteSpace = 'nowrap';
+                cell.style.textOverflow = 'ellipsis';
+            });
+        });
+        
+        // 调整网格行
+        gridRows.forEach(row => {
+            row.style.width = '100%';
+            row.style.display = 'flex';
+            row.style.marginBottom = '10px';
+            
+            const gridCells = row.querySelectorAll('.grid-cell');
+            gridCells.forEach((cell, colIndex) => {
+                cell.style.width = `${cellWidth}px`;
+                cell.style.height = `${cellWidth}px`;
+                cell.style.border = '1px solid #999';
+                cell.style.position = 'relative';
+                cell.style.boxSizing = 'border-box';
+                cell.style.flexShrink = '0';
+                
+                // 调整田字格线条
+                const gridLines = cell.querySelector('.grid-lines');
+                if (gridLines) {
+                    gridLines.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                    `;
+                }
+                
+                // 调整生字
+                const character = cell.querySelector('.character');
+                if (character) {
+                    character.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        font-size: ${Math.min(60, cellWidth * 0.6)}px;
+                        line-height: 1;
+                    `;
+                }
+            });
+        });
+        
+        pdfContainer.appendChild(pageClone);
+        
+        // 如果不是最后一页，添加分页符
+        if (pageIndex < allPages.length - 1) {
+            const pageBreak = document.createElement('div');
+            pageBreak.style.cssText = `
+                height: 0;
+                margin: 0;
+                padding: 0;
+                page-break-after: always;
+                break-after: page;
+            `;
+            pdfContainer.appendChild(pageBreak);
+        }
+    });
+    
+    return pdfContainer;
+}
+
+// 清理PDF容器
+function cleanupPDFContainer() {
+    const pdfContainer = document.getElementById('pdf-container');
+    if (pdfContainer) {
+        pdfContainer.remove();
+    }
+}
+        
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', init);
 </script>
