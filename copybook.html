@@ -1784,37 +1784,6 @@ async function downloadPDFUniversalFallback() {
 
 
 
-// 清理PDF容器
-function cleanupPDFContainer() {
-    const containers = ['pdf-temp-container', 'pdf-container'];
-    containers.forEach(id => {
-        const container = document.getElementById(id);
-        if (container) {
-            container.remove();
-        }
-    });
-}
-
-// 确保这些函数存在
-function getValidFileName(text) {
-    if (!text) return '字帖';
-    return text
-        .replace(/[<>:"/\\|?*]/g, '_')
-        .replace(/\s+/g, '_')
-        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '')
-        .substring(0, 50) || '字帖';
-}
-
-function getStrokeOrder(character) {
-    // 简化的笔顺生成
-    const defaultOrder = '1-2-3-4-5-6';
-    return strokeOrderData[character] || defaultOrder;
-}
-
-function formatStrokeOrderForStyle(order, style) {
-    // 简化的格式化
-    return order;
-}
 
 
         
