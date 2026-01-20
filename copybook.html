@@ -23,6 +23,16 @@
     <style>
 <!-- 在现有的CSS中添加以下样式 -->
 
+.download-word-btn {
+    background-color: #2b579a; /* Word蓝色 */
+    color: white;
+}
+
+.download-word-btn:hover {
+    background-color: #1e447e;
+    transform: translateY(-2px);
+}
+
 /* 移动端触摸优化 */
 @media (max-width: 768px) {
     button, 
@@ -778,17 +788,18 @@
                     </div>
                 </div>
                 
-                <div class="action-buttons">
-                    <button id="generate-btn" class="action-btn generate-btn">
-                        <i class="fas fa-magic"></i> 生成字帖
-                    </button>
-                    <button id="download-pdf-btn" class="action-btn download-btn" disabled>
-                        <i class="fas fa-file-pdf"></i> 下载PDF
-                    </button>
-                    <button id="reset-btn" class="action-btn reset-btn">
-                        <i class="fas fa-redo"></i> 重置设置
-                    </button>
-                </div>
+            <!-- 将现有的下载PDF按钮改为下载Word -->
+<div class="action-buttons">
+    <button id="generate-btn" class="action-btn generate-btn">
+        <i class="fas fa-magic"></i> 生成字帖
+    </button>
+    <button id="download-word-btn" class="action-btn download-btn" disabled>
+        <i class="fas fa-file-word"></i> 下载Word
+    </button>
+    <button id="reset-btn" class="action-btn reset-btn">
+        <i class="fas fa-redo"></i> 重置设置
+    </button>
+</div>
             </div>
             
             <!-- 右侧字帖预览 -->
@@ -860,7 +871,7 @@
     const colorOptions = document.querySelectorAll('.color-option:not(.custom-color)');
     const customColorInput = document.getElementById('custom-color');
     const generateBtn = document.getElementById('generate-btn');
-    const downloadPdfBtn = document.getElementById('download-pdf-btn');
+  const downloadWordBtn = document.getElementById('download-word-btn');
     const resetBtn = document.getElementById('reset-btn');
     const prevPageBtn = document.getElementById('prev-page-btn');
     const nextPageBtn = document.getElementById('next-page-btn');
@@ -942,7 +953,7 @@
         
         // 按钮事件
         generateBtn.addEventListener('click', generateCopybook);
-        downloadPdfBtn.addEventListener('click', downloadAsPDF);
+        downloadWordBtn.addEventListener('click', downloadAsWord);
         resetBtn.addEventListener('click', resetSettings);
         prevPageBtn.addEventListener('click', goToPrevPage);
         nextPageBtn.addEventListener('click', goToNextPage);
@@ -1217,7 +1228,7 @@
             characterCount.textContent = `共 ${currentCharacters.length} 个生字，${totalPages} 页，每页 ${rowsPerPage} 个生字`;
             
             // 启用下载按钮
-            downloadPdfBtn.disabled = false;
+            downloadWordBtn.disabled = false;
             
             console.log(`字帖生成完成: 总生字数 ${currentCharacters.length}, 总页数 ${totalPages}`);
             
@@ -1234,62 +1245,6 @@
     }
 
 
-// 优化PDF布局的函数
-function optimizeForPDF() {
-    // 1. 获取PDF页面尺寸 (A4尺寸)
-    const pdfWidth = 794; // A4在96dpi下的像素宽度 (210mm)
-    const pdfHeight = 1123; // A4高度 (297mm)
-    
-    // 2. 调整内容容器尺寸
-    const content = document.getElementById('copybook-content');
-    if (!content) return;
-    
-    content.style.width = pdfWidth + 'px';
-    content.style.maxWidth = '100%';
-    content.style.overflow = 'hidden';
-    content.style.margin = '0 auto';
-    
-    // 3. 调整网格页面尺寸
-    const gridPages = content.querySelectorAll('.grid-page');
-    gridPages.forEach(page => {
-        page.style.width = pdfWidth + 'px';
-        page.style.minHeight = pdfHeight + 'px';
-        page.style.boxSizing = 'border-box';
-        page.style.padding = '20px';
-        
-        // 确保8列网格正确显示
-        const gridRows = page.querySelectorAll('.grid-row');
-        gridRows.forEach(row => {
-            row.style.display = 'flex';
-            row.style.width = '100%';
-            
-            // 计算每个格子的宽度
-            const cellWidth = (pdfWidth - 40) / 8; // 减去padding
-            const gridCells = row.querySelectorAll('.grid-cell');
-            gridCells.forEach(cell => {
-                cell.style.width = cellWidth + 'px';
-                cell.style.height = cellWidth + 'px'; // 保持正方形
-                cell.style.flexShrink = '0';
-            });
-        });
-    });
-    
-    // 4. 添加分页符
-    let currentHeight = 0;
-    gridPages.forEach((page, index) => {
-        const pageHeight = page.offsetHeight;
-        
-        if (index > 0) {
-            page.style.pageBreakBefore = 'always';
-        }
-        
-        // 确保每页高度不超过A4高度
-        if (pageHeight > pdfHeight) {
-            page.style.height = pdfHeight + 'px';
-            page.style.overflow = 'hidden';
-        }
-    });
-}
 
 // 恢复原始布局
 function restoreOriginalLayout() {
@@ -1332,455 +1287,369 @@ function restoreOriginalLayout() {
 
 
         
-    // 下载为PDF - 修复中文乱码问题
-// 在 downloadAsPDF 函数之前添加这个辅助函数
-function getValidFileName(text) {
-    if (!text) return '字帖';
-    return text
-        .replace(/[<>:"/\\|?*]/g, '_') // 移除非法字符
-        .replace(/\s+/g, '_')           // 空格替换为下划线
-        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '') // 只保留中文、英文、数字和下划线
-        .substring(0, 50) || '字帖';    // 限制长度
-}
    
 // 下载为PDF - 使用中文字体支持
 
-// 下载为PDF - 修复所有年级问题
-async function downloadAsPDF() {
+// 下载为PDF - 使用html2pdf库（支持中文）
+
+
+// 导出为Word文档 - 确保中文正常显示
+async function downloadAsWord() {
     if (currentCharacters.length === 0) {
-        showError('请先选择年级或上传Excel文件');
+        showError('请先生成字帖');
         return;
     }
     
     showLoading();
     
     try {
-        // 保存当前状态
-        const originalCharacters = [...currentCharacters];
-        const originalTitle = previewTitle.textContent;
+        // 计算每页显示的字符
+        const rowsPerPage = currentSettings.rowsPerPage;
+        const charsPerRow = currentSettings.colsPerPage;
+        const charsPerPage = rowsPerPage; // 每页显示的行数（每行第一个格子有字）
+        const totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
         
-        console.log(`开始生成PDF，当前年级: ${originalTitle}`);
-        console.log(`生字数量: ${originalCharacters.length}`);
-        console.log('前5个生字:', originalCharacters.slice(0, 5));
+        // 创建Word文档内容
+        const title = previewTitle.textContent || '小学语文生字字帖';
+        const date = new Date().toLocaleDateString('zh-CN');
         
-        // 检查数据是否有效
-        if (originalCharacters.length === 0) {
-            throw new Error('没有可用的生字数据');
-        }
-        
-        // 确保每个生字都是有效的字符串
-        const validCharacters = originalCharacters.filter(char => {
-            const isValid = char && typeof char === 'string' && char.trim().length > 0;
-            if (!isValid) {
-                console.warn('发现无效生字:', char);
-            }
-            return isValid;
-        });
-        
-        if (validCharacters.length === 0) {
-            throw new Error('没有有效的生字数据');
-        }
-        
-        console.log(`有效生字数量: ${validCharacters.length}`);
-        
-        // 创建PDF容器
-        const pdfContainer = createPDFContainerForDownload(validCharacters, originalTitle);
-        
-        // 等待DOM更新
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // 检查容器内容
-        const containerContent = pdfContainer.innerHTML;
-        if (!containerContent || containerContent.trim().length < 100) {
-            console.error('PDF容器内容为空:', containerContent);
-            throw new Error('PDF内容生成失败');
-        }
-        
-        // 获取容器中的文本内容
-        const textContent = pdfContainer.textContent || pdfContainer.innerText;
-        console.log('PDF容器文本内容:', textContent.substring(0, 100));
-        
-        // 配置html2pdf选项 - 优化版本
-        const opt = {
-            margin: [0, 0, 0, 0],
-            filename: getValidFileName(originalTitle) + '.pdf',
-            image: { 
-                type: 'jpeg', 
-                quality: 0.95 
-            },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: true, // 启用日志
-                width: 794,
-                height: pdfContainer.scrollHeight,
-                windowWidth: 794,
-                scrollX: 0,
-                scrollY: 0,
-                letterRendering: true,
-                allowTaint: true,
-                useCORS: true,
-                onclone: function(clonedDoc) {
-                    // 确保克隆的文档也有正确的内容
-                    console.log('文档克隆完成');
-                    const clonedContainer = clonedDoc.getElementById('pdf-temp-container');
-                    if (clonedContainer) {
-                        console.log('克隆容器内容长度:', clonedContainer.innerHTML.length);
+        // 创建完整的HTML文档
+        let wordContent = `
+            <!DOCTYPE html>
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                  xmlns:w="urn:schemas-microsoft-com:office:word"
+                  xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+                <meta charset="UTF-8">
+                <title>${title}</title>
+                <style>
+                    body {
+                        font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        line-height: 1.5;
                     }
-                }
-            },
-            jsPDF: { 
-                unit: 'mm',
-                format: 'a4',
-                orientation: 'portrait',
-                compress: true
-            }
-        };
-        
-        // 生成PDF
-        await new Promise((resolve, reject) => {
-            html2pdf()
-                .set(opt)
-                .from(pdfContainer)
-                .toPdf()
-                .get('pdf')
-                .then((pdf) => {
-                    console.log(`PDF生成成功，总页数: ${pdf.internal.getNumberOfPages()}`);
                     
-                    // 检查PDF内容
-                    const pdfOutput = pdf.output('datauristring');
-                    if (pdfOutput && pdfOutput.length > 1000) {
-                        console.log('PDF输出正常，大小:', pdfOutput.length);
-                        pdf.save(getValidFileName(originalTitle) + '.pdf');
-                        resolve();
-                    } else {
-                        console.error('PDF输出异常，大小:', pdfOutput.length);
-                        reject(new Error('PDF内容生成失败'));
+                    .page-container {
+                        width: 794px;
+                        min-height: 1123px;
+                        margin: 0 auto;
+                        padding: 30px;
+                        box-sizing: border-box;
+                        page-break-after: always;
+                        position: relative;
                     }
-                })
-                .catch(reject);
-        });
-        
-        console.log('PDF下载完成');
-        showSuccess('PDF下载成功！');
-        
-    } catch (error) {
-        console.error('PDF生成失败详情:', error);
-        
-        // 尝试备用方案
-        try {
-            console.log('尝试备用方案...');
-            await downloadPDFUniversalFallback();
-        } catch (fallbackError) {
-            console.error('备用方案也失败:', fallbackError);
-            showError(`PDF生成失败: ${error.message}\n请尝试：\n1. 按Ctrl+P使用浏览器打印功能\n2. 截图保存`);
-        }
-        
-    } finally {
-        // 清理临时容器
-        cleanupPDFContainer();
-        hideLoading();
-    }
-}
-
-// 创建PDF容器的通用函数
-function createPDFContainerForDownload(characters, title) {
-    // 清理可能存在的旧容器
-    cleanupPDFContainer();
-    
-    // 创建新容器
-    const pdfContainer = document.createElement('div');
-    pdfContainer.id = 'pdf-temp-container';
-    pdfContainer.style.cssText = `
-        position: fixed;
-        top: -9999px;
-        left: -9999px;
-        width: 794px;
-        background: white;
-        padding: 20px;
-        box-sizing: border-box;
-        z-index: -9999;
-        opacity: 0.01;
-        font-family: 'Ma Shan Zheng', 'KaiTi', 'SimSun', sans-serif;
-    `;
-    
-    document.body.appendChild(pdfContainer);
-    
-    // 计算分页
-    const rowsPerPage = 10;
-    const colsPerRow = 8;
-    const totalPages = Math.ceil(characters.length / rowsPerPage);
-    
-    console.log(`PDF配置: ${totalPages}页, 每页${rowsPerPage}行`);
-    
-    // 生成PDF内容
-    let htmlContent = `
-        <style>
-            .pdf-page {
-                width: 100%;
-                min-height: 1123px;
-                margin-bottom: 20px;
-                page-break-after: always;
-                background: white;
-                padding: 20px;
-                box-sizing: border-box;
-            }
-            
-            .pdf-stroke-row {
-                display: flex;
-                width: 100%;
-                margin-bottom: 8px;
-            }
-            
-            .pdf-stroke-cell {
-                width: 94px;
-                height: 28px;
-                font-size: 14px;
-                text-align: center;
-                line-height: 28px;
-                background: #f8f9fa;
-                border-radius: 4px;
-                margin-right: 2px;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-                font-family: 'Noto Sans SC', sans-serif;
-            }
-            
-            .pdf-grid-row {
-                display: flex;
-                width: 100%;
-                margin-bottom: 15px;
-            }
-            
-            .pdf-grid-cell {
-                width: 94px;
-                height: 94px;
-                border: 1px solid #999;
-                margin-right: 2px;
-                position: relative;
-                box-sizing: border-box;
-                background: white;
-            }
-            
-            .pdf-grid-cell.empty {
-                background: #f9f9f9;
-            }
-            
-            .pdf-character {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 56px;
-                line-height: 1;
-                font-family: 'Ma Shan Zheng', cursive;
-                color: ${currentSettings.fontColor};
-            }
-            
-            .pdf-grid-lines {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                pointer-events: none;
-            }
-            
-            .pdf-line {
-                position: absolute;
-                background-color: #eee;
-            }
-            
-            .center-vertical {
-                width: 1px;
-                height: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-            
-            .center-horizontal {
-                height: 1px;
-                width: 100%;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-        </style>
-        
-        <div style="text-align:center; margin-bottom:20px; font-size:24px; color:#4a6fa5; font-weight:bold;">
-            ${title}
-        </div>
-    `;
-    
-    // 生成每页内容
-    for (let page = 0; page < totalPages; page++) {
-        const startIndex = page * rowsPerPage;
-        const endIndex = Math.min(startIndex + rowsPerPage, characters.length);
-        const pageCharacters = characters.slice(startIndex, endIndex);
-        
-        htmlContent += `<div class="pdf-page" id="pdf-page-${page + 1}">`;
-        
-        // 生成每行内容
-        for (let row = 0; row < rowsPerPage; row++) {
-            if (row < pageCharacters.length) {
-                const character = pageCharacters[row];
-                
-                
-                // 笔顺行
-                htmlContent += `<div class="pdf-stroke-row">`;
-                for (let col = 0; col < colsPerRow; col++) {
-                    if (col === 0) {
-                        htmlContent += `<div class="pdf-stroke-cell">${formattedStroke}</div>`;
-                    } else {
-                        htmlContent += `<div class="pdf-stroke-cell" style="background:transparent;"></div>`;
+                    
+                    .page-header {
+                        text-align: center;
+                        margin-bottom: 25px;
+                        padding-bottom: 15px;
+                        border-bottom: 2px solid #4a6fa5;
                     }
-                }
-                htmlContent += `</div>`;
+                    
+                    .page-header h2 {
+                        color: #4a6fa5;
+                        font-size: 28px;
+                        margin: 0 0 10px 0;
+                    }
+                    
+                    .page-header p {
+                        color: #666;
+                        margin: 5px 0;
+                        font-size: 14px;
+                    }
+                    
+                    .grid-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        border: 2px solid #333;
+                    }
+                    
+                    .grid-row {
+                        height: 80px;
+                    }
+                    
+                    .grid-cell {
+                        border: 1px solid #999;
+                        position: relative;
+                        text-align: center;
+                        vertical-align: middle;
+                        width: ${100 / charsPerRow}%;
+                        height: 80px;
+                    }
+                    
+                    .grid-lines {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                    }
+                    
+                    .grid-line {
+                        position: absolute;
+                        background-color: #ddd;
+                    }
+                    
+                    .center-vertical {
+                        width: 1px;
+                        height: 100%;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    
+                    .center-horizontal {
+                        height: 1px;
+                        width: 100%;
+                        top: 50%;
+                        transform: translateY(-50%);
+                    }
+                    
+                    .diagonal-1 {
+                        width: 1px;
+                        height: 141%;
+                        left: 50%;
+                        top: -20%;
+                        transform: translateX(-50%) rotate(45deg);
+                        background-color: #eee;
+                    }
+                    
+                    .diagonal-2 {
+                        width: 1px;
+                        height: 141%;
+                        left: 50%;
+                        top: -20%;
+                        transform: translateX(-50%) rotate(-45deg);
+                        background-color: #eee;
+                    }
+                    
+                    .character {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        font-family: '${getFontFamilyName(currentSettings.fontFamily)}';
+                        font-size: ${currentSettings.fontSize * 0.7}px;
+                        font-weight: ${currentSettings.fontWeight};
+                        color: ${currentSettings.fontColor};
+                        z-index: 2;
+                    }
+                    
+                    .page-footer {
+                        text-align: center;
+                        margin-top: 20px;
+                        color: #888;
+                        font-size: 12px;
+                        padding-top: 10px;
+                        border-top: 1px solid #eee;
+                    }
+                    
+                    @page {
+                        size: A4 portrait;
+                        margin: 0;
+                    }
+                </style>
+            </head>
+            <body>
+        `;
+        
+        // 生成每一页
+        for (let page = 1; page <= totalPages; page++) {
+            wordContent += `<div class="page-container">`;
+            
+            // 页眉
+            wordContent += `
+                <div class="page-header">
+                    <h2>${title}</h2>
+                    <p>规范书写练习 - 共 ${currentCharacters.length} 个生字</p>
+                    <p>第 ${page} 页 / 共 ${totalPages} 页 - 生成日期: ${date}</p>
+                </div>
+            `;
+            
+            // 创建表格
+            wordContent += `<table class="grid-table">`;
+            
+            // 计算当前页的生字
+            const startIndex = (page - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, currentCharacters.length);
+            const pageCharacters = currentCharacters.slice(startIndex, endIndex);
+            
+            // 生成每一行
+            for (let row = 0; row < rowsPerPage; row++) {
+                const hasCharacter = row < pageCharacters.length;
+                const currentCharacter = hasCharacter ? pageCharacters[row] : '';
                 
-                // 田字格行
-                htmlContent += `<div class="pdf-grid-row">`;
-                for (let col = 0; col < colsPerRow; col++) {
-                    if (col === 0) {
-                        const gridType = currentSettings.gridType === 'mi' ? 'mi' : 'tian';
-                        const diagonalLines = gridType === 'mi' ? 
-                            '<div class="pdf-line diagonal-1" style="width:1px;height:141%;left:50%;top:-20%;transform:translateX(-50%) rotate(45deg);"></div>' +
-                            '<div class="pdf-line diagonal-2" style="width:1px;height:141%;left:50%;top:-20%;transform:translateX(-50%) rotate(-45deg);"></div>' : '';
-                        
-                        htmlContent += `
-                            <div class="pdf-grid-cell">
-                                <div class="pdf-grid-lines">
-                                    <div class="pdf-line center-vertical"></div>
-                                    <div class="pdf-line center-horizontal"></div>
-                                    ${diagonalLines}
-                                </div>
-                                <div class="pdf-character">${character}</div>
+                wordContent += `<tr class="grid-row">`;
+                
+                // 生成每行的8个格子
+                for (let col = 0; col < charsPerRow; col++) {
+                    wordContent += `<td class="grid-cell">`;
+                    
+                    // 添加网格线
+                    if (currentSettings.gridType === 'tian') {
+                        wordContent += `
+                            <div class="grid-lines">
+                                <div class="grid-line center-vertical"></div>
+                                <div class="grid-line center-horizontal"></div>
                             </div>
                         `;
-                    } else {
-                        htmlContent += `<div class="pdf-grid-cell empty"></div>`;
+                    } else if (currentSettings.gridType === 'mi') {
+                        wordContent += `
+                            <div class="grid-lines">
+                                <div class="grid-line center-vertical"></div>
+                                <div class="grid-line center-horizontal"></div>
+                                <div class="grid-line diagonal-1"></div>
+                                <div class="grid-line diagonal-2"></div>
+                            </div>
+                        `;
                     }
+                    
+                    // 如果是第一个格子且有生字，显示生字
+                    if (col === 0 && hasCharacter) {
+                        wordContent += `
+                            <div class="character">${currentCharacter}</div>
+                        `;
+                    }
+                    
+                    wordContent += `</td>`;
                 }
-                htmlContent += `</div>`;
-            } else {
-                // 空白行
-                htmlContent += `<div class="pdf-stroke-row">`;
-                for (let col = 0; col < colsPerRow; col++) {
-                    htmlContent += `<div class="pdf-stroke-cell" style="background:transparent;"></div>`;
-                }
-                htmlContent += `</div>`;
                 
-                htmlContent += `<div class="pdf-grid-row">`;
-                for (let col = 0; col < colsPerRow; col++) {
-                    htmlContent += `<div class="pdf-grid-cell empty"></div>`;
-                }
-                htmlContent += `</div>`;
-            }
-        }
-        
-        htmlContent += `</div>`;
-    }
-    
-    // 添加页脚
-    htmlContent += `
-        <div style="text-align:center; margin-top:20px; font-size:12px; color:#888;">
-            共 ${characters.length} 个生字 • ${totalPages} 页 • 生成时间: ${new Date().toLocaleDateString('zh-CN')}
-        </div>
-    `;
-    
-    pdfContainer.innerHTML = htmlContent;
-    
-    // 验证内容
-    console.log('PDF容器HTML长度:', htmlContent.length);
-    console.log('PDF容器中是否包含生字:', htmlContent.includes(characters[0] || ''));
-    
-    return pdfContainer;
-}
-
-// 通用备用方案
-async function downloadPDFUniversalFallback() {
-    showLoading();
-    
-    try {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        });
-        
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 15;
-        
-        // 添加标题
-        pdf.setFontSize(18);
-        pdf.setTextColor(74, 111, 165);
-        pdf.text(previewTitle.textContent, pageWidth / 2, margin, { align: 'center' });
-        
-        // 添加生字表格
-        pdf.setFontSize(14);
-        pdf.setTextColor(0, 0, 0);
-        
-        let yPos = margin + 20;
-        const charsPerRow = 4;
-        const charSize = 20;
-        
-        // 分页生成生字
-        for (let i = 0; i < currentCharacters.length; i++) {
-            const pageRow = Math.floor((i * charsPerRow) / Math.floor((pageHeight - margin * 2) / charSize));
-            const pageCol = i % charsPerRow;
-            
-            if (i > 0 && pageCol === 0) {
-                const currentY = yPos + (Math.floor(i / charsPerRow) % Math.floor((pageHeight - margin * 2) / charSize)) * charSize;
-                if (currentY > pageHeight - margin) {
-                    pdf.addPage();
-                    yPos = margin;
-                }
+                wordContent += `</tr>`;
             }
             
-            const char = currentCharacters[i];
-            const xPos = margin + pageCol * 45;
-            const currentY = margin + 20 + (Math.floor(i / charsPerRow) % Math.floor((pageHeight - margin * 2) / charSize)) * charSize;
+            wordContent += `</table>`;
             
-            // 添加生字
-            pdf.setFontSize(36);
-            pdf.text(char, xPos + 10, currentY);
+            // 页脚
+            wordContent += `
+                <div class="page-footer">
+                    <p>小学语文生字字帖生成系统 | 田字格/米字格练习本</p>
+                    <p>温馨提示：请使用楷体或毛笔字体进行描红练习</p>
+                </div>
+            `;
             
-           
-            
-            // 添加方格
-            pdf.setDrawColor(200, 200, 200);
-            pdf.setLineWidth(0.3);
-            pdf.rect(xPos, currentY - 15, 40, 40);
-            
-            // 添加田字格线
-            pdf.setDrawColor(230, 230, 230);
-            pdf.setLineWidth(0.1);
-            pdf.line(xPos + 20, currentY - 15, xPos + 20, currentY + 25);
-            pdf.line(xPos, currentY + 5, xPos + 40, currentY + 5);
+            wordContent += `</div>`;
         }
         
-        // 添加统计信息
-        pdf.setFontSize(10);
-        pdf.setTextColor(100, 100, 100);
-        pdf.text(`共 ${currentCharacters.length} 个生字`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        wordContent += `
+            </body>
+            </html>
+        `;
         
-        const fileName = getValidFileName(previewTitle.textContent) + '_简化版.pdf';
-        pdf.save(fileName);
+        // 使用Blob创建Word文档
+        const blob = new Blob(
+            ['\ufeff' + wordContent], // 添加BOM确保中文编码正确
+            { type: 'application/msword' }
+        );
         
-        showSuccess('PDF下载成功（简化版）！');
+        // 创建下载链接
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = getValidFileName(title) + '.doc';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showSuccess('Word文档下载成功！');
         
     } catch (error) {
-        throw error;
+        console.error('Word导出失败:', error);
+        showError('Word导出失败: ' + error.message);
+        
+        // 备用方案：使用纯文本格式
+        try {
+            await downloadAsWordBackup();
+        } catch (backupError) {
+            showError('两种Word生成方式都失败了');
+        }
     } finally {
         hideLoading();
     }
 }
 
+// 辅助函数：获取字体名称
+function getFontFamilyName(fontFamily) {
+    const fontMap = {
+        'Ma Shan Zheng, cursive': 'Ma Shan Zheng',
+        'KaiTi, serif': '楷体',
+        'SimSun, serif': '宋体',
+        'Microsoft YaHei, sans-serif': '微软雅黑'
+    };
+    return fontMap[fontFamily] || '楷体';
+}
 
-
-
+// 备用Word导出方案（纯文本）
+async function downloadAsWordBackup() {
+    const title = previewTitle.textContent || '小学语文生字字帖';
+    const date = new Date().toLocaleDateString('zh-CN');
+    
+    // 创建简化的Word文档
+    let wordContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>${title}</title>
+            <style>
+                body {
+                    font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+                    margin: 30px;
+                    line-height: 1.8;
+                }
+                h1 { color: #4a6fa5; text-align: center; }
+                .character-grid { 
+                    display: inline-block; 
+                    width: 60px; 
+                    height: 60px; 
+                    border: 1px solid #333; 
+                    text-align: center; 
+                    line-height: 60px; 
+                    margin: 5px;
+                    font-size: 24px;
+                }
+                .page-break { page-break-after: always; }
+            </style>
+        </head>
+        <body>
+            <h1>${title}</h1>
+            <p><strong>生成日期:</strong> ${date}</p>
+            <p><strong>总生字数:</strong> ${currentCharacters.length}</p>
+            <hr>
+            <h3>生字列表：</h3>
+    `;
+    
+    // 每行显示10个生字
+    const charsPerLine = 10;
+    for (let i = 0; i < currentCharacters.length; i++) {
+        if (i % charsPerLine === 0 && i > 0) {
+            wordContent += '<br>';
+        }
+        wordContent += `<div class="character-grid">${currentCharacters[i]}</div>`;
+    }
+    
+    wordContent += `
+            <hr>
+            <p>小学语文生字字帖生成系统</p>
+            <p>如需田字格/米字格版本，请使用在线生成功能</p>
+        </body>
+        </html>
+    `;
+    
+    const blob = new Blob(
+        ['\ufeff' + wordContent],
+        { type: 'application/msword' }
+    );
+    
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = getValidFileName(title) + '_列表.doc';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
 
         
         
@@ -1869,7 +1738,7 @@ async function downloadPDFUniversalFallback() {
         gridPagesContainer.innerHTML = '';
         previewTitle.textContent = '字帖预览';
         characterCount.textContent = '请先生成字帖';
-        downloadPdfBtn.disabled = true;
+        downloadWordBtn.disabled = true;
         
         updatePageInfo();
         updatePageControls();
