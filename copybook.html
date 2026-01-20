@@ -11,104 +11,87 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- 在现有script引用后面添加 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- 添加FileSaver.js用于保存文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
-<!-- 在现有的script引用后面添加 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/jspdf@latest/dist/jspdf.umd.min.js"></script>
-<!-- 添加中文字体支持 -->
-<script src="https://unpkg.com/jspdf-customfonts@latest/dist/default_vfs.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.umd.min.js"></script>
     <style>
-<!-- 在现有的CSS中添加以下样式 -->
+        /* 移动端触摸优化 */
+        @media (max-width: 768px) {
+            button, 
+            .action-btn, 
+            .nav-link, 
+            .grid-type-option,
+            .color-option,
+            .upload-input {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+            
+            /* 防止双击缩放 */
+            button, .action-btn {
+                touch-action: manipulation;
+            }
+            
+            /* 优化滚动体验 */
+            .settings-panel, .copybook-preview {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* 修复iOS Safari上的按钮样式 */
+            input[type="range"] {
+                -webkit-appearance: none;
+                background: transparent;
+            }
+            
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+            }
+        }
+        
+        /* 更新设置面板样式，使其可滚动 */
+        .settings-panel {
+            width: 320px;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            height: 85vh; /* 设置固定高度 */
+            overflow-y: auto; /* 添加垂直滚动 */
+            position: sticky;
+            top: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #4a6fa5 #f0f0f0;
+        }
 
-.download-word-btn {
-    background-color: #2b579a; /* Word蓝色 */
-    color: white;
-}
+        /* 自定义滚动条样式 */
+        .settings-panel::-webkit-scrollbar {
+            width: 6px;
+        }
 
-.download-word-btn:hover {
-    background-color: #1e447e;
-    transform: translateY(-2px);
-}
+        .settings-panel::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
 
-/* 移动端触摸优化 */
-@media (max-width: 768px) {
-    button, 
-    .action-btn, 
-    .nav-link, 
-    .grid-type-option,
-    .color-option,
-    .upload-input {
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-    }
-    
-    /* 防止双击缩放 */
-    button, .action-btn {
-        touch-action: manipulation;
-    }
-    
-    /* 优化滚动体验 */
-    .settings-panel, .copybook-preview {
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    /* 修复iOS Safari上的按钮样式 */
-    input[type="range"] {
-        -webkit-appearance: none;
-        background: transparent;
-    }
-    
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-    }
-}
-    /* 更新设置面板样式，使其可滚动 */
-    .settings-panel {
-        width: 320px;
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        height: 85vh; /* 设置固定高度 */
-        overflow-y: auto; /* 添加垂直滚动 */
-        position: sticky;
-        top: 20px;
-        scrollbar-width: thin;
-        scrollbar-color: #4a6fa5 #f0f0f0;
-    }
+        .settings-panel::-webkit-scrollbar-thumb {
+            background: #4a6fa5;
+            border-radius: 3px;
+        }
 
-    /* 自定义滚动条样式 */
-    .settings-panel::-webkit-scrollbar {
-        width: 6px;
-    }
+        .settings-panel::-webkit-scrollbar-thumb:hover {
+            background: #3a5a8a;
+        }
 
-    .settings-panel::-webkit-scrollbar-track {
-        background: #f0f0f0;
-        border-radius: 3px;
-    }
-
-    .settings-panel::-webkit-scrollbar-thumb {
-        background: #4a6fa5;
-        border-radius: 3px;
-    }
-
-    .settings-panel::-webkit-scrollbar-thumb:hover {
-        background: #3a5a8a;
-    }
-
-    /* 调整字帖预览区域 */
-    .copybook-preview {
-        flex: 1;
-        background: white;
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        max-height: 85vh; /* 与左侧面板高度一致 */
-        overflow-y: auto; /* 如果内容过多也可滚动 */
-    }
+        /* 调整字帖预览区域 */
+        .copybook-preview {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            max-height: 85vh; /* 与左侧面板高度一致 */
+            overflow-y: auto; /* 如果内容过多也可滚动 */
+        }
 
         /* 导航栏样式 */
         .navbar {
@@ -159,17 +142,6 @@
             display: flex;
             gap: 30px;
             margin-top: 20px;
-        }
-        
-        .settings-panel {
-            width: 300px;
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
         }
         
         .settings-group {
@@ -407,13 +379,13 @@
             transform: translateY(-2px);
         }
         
-        .download-btn {
-            background-color: #27ae60;
+        .download-word-btn {
+            background-color: #2b579a;
             color: white;
         }
         
-        .download-btn:hover {
-            background-color: #219653;
+        .download-word-btn:hover {
+            background-color: #1e447e;
             transform: translateY(-2px);
         }
         
@@ -425,14 +397,6 @@
         .reset-btn:hover {
             background-color: #c0392b;
             transform: translateY(-2px);
-        }
-        
-        .copybook-preview {
-            flex: 1;
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
         }
         
         .preview-header {
@@ -654,10 +618,6 @@
                 flex-direction: column;
             }
         }
-
-
-        
-        
     </style>
 </head>
 <body>
@@ -788,18 +748,17 @@
                     </div>
                 </div>
                 
-            <!-- 将现有的下载PDF按钮改为下载Word -->
-<div class="action-buttons">
-    <button id="generate-btn" class="action-btn generate-btn">
-        <i class="fas fa-magic"></i> 生成字帖
-    </button>
-    <button id="download-word-btn" class="action-btn download-btn" disabled>
-        <i class="fas fa-file-word"></i> 下载Word
-    </button>
-    <button id="reset-btn" class="action-btn reset-btn">
-        <i class="fas fa-redo"></i> 重置设置
-    </button>
-</div>
+                <div class="action-buttons">
+                    <button id="generate-btn" class="action-btn generate-btn">
+                        <i class="fas fa-magic"></i> 生成字帖
+                    </button>
+                    <button id="download-word-btn" class="action-btn download-word-btn" disabled>
+                        <i class="fas fa-file-word"></i> 下载Word
+                    </button>
+                    <button id="reset-btn" class="action-btn reset-btn">
+                        <i class="fas fa-redo"></i> 重置设置
+                    </button>
+                </div>
             </div>
             
             <!-- 右侧字帖预览 -->
@@ -829,7 +788,7 @@
                 </div>
                 
                 <div class="preview-footer">
-                    <p>温馨提示：生成字帖后，您可以直接打印或下载为PDF文件</p>
+                    <p>温馨提示：生成字帖后，您可以直接打印或下载为Word文件</p>
                 </div>
             </div>
         </div>
@@ -871,7 +830,7 @@
     const colorOptions = document.querySelectorAll('.color-option:not(.custom-color)');
     const customColorInput = document.getElementById('custom-color');
     const generateBtn = document.getElementById('generate-btn');
-  const downloadWordBtn = document.getElementById('download-word-btn');
+    const downloadWordBtn = document.getElementById('download-word-btn');
     const resetBtn = document.getElementById('reset-btn');
     const prevPageBtn = document.getElementById('prev-page-btn');
     const nextPageBtn = document.getElementById('next-page-btn');
@@ -1244,415 +1203,406 @@
         }
     }
 
-
-
-// 恢复原始布局
-function restoreOriginalLayout() {
-    const content = document.getElementById('copybook-content');
-    if (!content) return;
-    
-    // 移除PDF优化样式
-    content.style.width = '';
-    content.style.maxWidth = '';
-    content.style.overflow = '';
-    content.style.margin = '';
-    
-    // 恢复网格页面样式
-    const gridPages = content.querySelectorAll('.grid-page');
-    gridPages.forEach(page => {
-        page.style.width = '';
-        page.style.minHeight = '';
-        page.style.boxSizing = '';
-        page.style.padding = '';
-        page.style.pageBreakBefore = '';
-        page.style.height = '';
-        page.style.overflow = '';
-        
-        // 恢复网格行样式
-        const gridRows = page.querySelectorAll('.grid-row');
-        gridRows.forEach(row => {
-            row.style.display = '';
-            row.style.width = '';
-            
-            // 恢复单元格样式
-            const gridCells = row.querySelectorAll('.grid-cell');
-            gridCells.forEach(cell => {
-                cell.style.width = '';
-                cell.style.height = '';
-                cell.style.flexShrink = '';
-            });
-        });
-    });
-}
-
-
-        
+    // 获取安全的文件名
+    function getValidFileName(text) {
+        if (!text) return '字帖';
+        return text
+            .replace(/[<>:"/\\|?*]/g, '_') // 移除非法字符
+            .replace(/\s+/g, '_')           // 空格替换为下划线
+            .replace(/[^\u4e00-\u9fa5a-zA-Z0-9_]/g, '') // 只保留中文、英文、数字和下划线
+            .substring(0, 50) || '字帖';    // 限制长度
+    }
    
-// 下载为PDF - 使用中文字体支持
-
-// 下载为PDF - 使用html2pdf库（支持中文）
-
-
-// 导出为Word文档 - 确保中文正常显示
-async function downloadAsWord() {
-    if (currentCharacters.length === 0) {
-        showError('请先生成字帖');
-        return;
+    // 下载为Word文档 - 使用表格布局确保格式正确
+    async function downloadAsWord() {
+        if (currentCharacters.length === 0) {
+            showError('请先生成字帖');
+            return;
+        }
+        
+        showLoading();
+        
+        try {
+            // 计算每页显示的字符
+            const rowsPerPage = currentSettings.rowsPerPage;
+            const colsPerRow = currentSettings.colsPerPage;
+            const totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
+            
+            // 获取标题
+            const title = previewTitle.textContent || '小学语文生字字帖';
+            const date = new Date().toLocaleDateString('zh-CN');
+            const fileName = getValidFileName(title) + '.doc';
+            
+            // 创建Word文档的HTML内容
+            let wordHTML = `
+                <!DOCTYPE html>
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                      xmlns:w="urn:schemas-microsoft-com:office:word" 
+                      xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${title}</title>
+                    <style>
+                        body {
+                            font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            background-color: #ffffff;
+                        }
+                        
+                        .page {
+                            width: 794px; /* A4宽度 */
+                            min-height: 1123px; /* A4高度 */
+                            margin: 0 auto;
+                            padding: 40px 50px;
+                            box-sizing: border-box;
+                            page-break-after: always;
+                        }
+                        
+                        .page-header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            padding-bottom: 15px;
+                            border-bottom: 2px solid #4a6fa5;
+                        }
+                        
+                        .page-title {
+                            color: #4a6fa5;
+                            font-size: 28px;
+                            margin: 0 0 10px 0;
+                            font-weight: bold;
+                        }
+                        
+                        .page-subtitle {
+                            color: #666666;
+                            font-size: 16px;
+                            margin: 5px 0;
+                        }
+                        
+                        .page-info {
+                            color: #999999;
+                            font-size: 14px;
+                            margin: 5px 0;
+                        }
+                        
+                        .grid-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            border: 2px solid #333333;
+                            margin-top: 20px;
+                        }
+                        
+                        .grid-row {
+                            height: 70px;
+                        }
+                        
+                        .grid-cell {
+                            border: 1px solid #999999;
+                            position: relative;
+                            text-align: center;
+                            vertical-align: middle;
+                            width: ${100 / colsPerRow}%;
+                            background-color: #ffffff;
+                        }
+                        
+                        .grid-lines {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            pointer-events: none;
+                        }
+                        
+                        .grid-line {
+                            position: absolute;
+                            background-color: #dddddd;
+                        }
+                        
+                        .center-vertical {
+                            width: 1px;
+                            height: 100%;
+                            left: 50%;
+                            transform: translateX(-50%);
+                        }
+                        
+                        .center-horizontal {
+                            height: 1px;
+                            width: 100%;
+                            top: 50%;
+                            transform: translateY(-50%);
+                        }
+                        
+                        .diagonal-1 {
+                            width: 1px;
+                            height: 141%;
+                            left: 50%;
+                            top: -20%;
+                            transform: translateX(-50%) rotate(45deg);
+                            background-color: #eeeeee;
+                        }
+                        
+                        .diagonal-2 {
+                            width: 1px;
+                            height: 141%;
+                            left: 50%;
+                            top: -20%;
+                            transform: translateX(-50%) rotate(-45deg);
+                            background-color: #eeeeee;
+                        }
+                        
+                        .character {
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            font-family: '${getFontFamilyName(currentSettings.fontFamily)}';
+                            font-size: ${currentSettings.fontSize * 0.7}px;
+                            font-weight: ${currentSettings.fontWeight};
+                            color: ${currentSettings.fontColor};
+                            z-index: 2;
+                            text-align: center;
+                        }
+                        
+                        .page-footer {
+                            text-align: center;
+                            margin-top: 30px;
+                            padding-top: 15px;
+                            border-top: 1px solid #eeeeee;
+                            color: #888888;
+                            font-size: 12px;
+                        }
+                        
+                        .empty-cell {
+                            background-color: #f9f9f9;
+                        }
+                        
+                        @page {
+                            size: A4 portrait;
+                            margin: 0;
+                        }
+                    </style>
+                </head>
+                <body>
+            `;
+            
+            // 生成每一页
+            for (let page = 1; page <= totalPages; page++) {
+                wordHTML += `<div class="page">`;
+                
+                // 页眉
+                wordHTML += `
+                    <div class="page-header">
+                        <h1 class="page-title">${title}</h1>
+                        <p class="page-subtitle">规范书写练习 - 共 ${currentCharacters.length} 个生字</p>
+                        <p class="page-info">第 ${page} 页 / 共 ${totalPages} 页 - 生成日期: ${date}</p>
+                    </div>
+                `;
+                
+                // 计算当前页的生字
+                const startIndex = (page - 1) * rowsPerPage;
+                const endIndex = Math.min(startIndex + rowsPerPage, currentCharacters.length);
+                const pageCharacters = currentCharacters.slice(startIndex, endIndex);
+                
+                // 创建表格
+                wordHTML += `<table class="grid-table">`;
+                
+                // 生成每一行
+                for (let row = 0; row < rowsPerPage; row++) {
+                    wordHTML += `<tr class="grid-row">`;
+                    
+                    const hasCharacter = row < pageCharacters.length;
+                    const currentCharacter = hasCharacter ? pageCharacters[row] : '';
+                    
+                    // 生成每行的格子
+                    for (let col = 0; col < colsPerRow; col++) {
+                        const cellClass = (col === 0 && hasCharacter) ? 'grid-cell' : 'grid-cell empty-cell';
+                        
+                        wordHTML += `<td class="${cellClass}" style="width: ${100 / colsPerRow}%; height: 70px;">`;
+                        
+                        // 添加网格线
+                        if (currentSettings.gridType === 'tian') {
+                            wordHTML += `
+                                <div class="grid-lines">
+                                    <div class="grid-line center-vertical"></div>
+                                    <div class="grid-line center-horizontal"></div>
+                                </div>
+                            `;
+                        } else if (currentSettings.gridType === 'mi') {
+                            wordHTML += `
+                                <div class="grid-lines">
+                                    <div class="grid-line center-vertical"></div>
+                                    <div class="grid-line center-horizontal"></div>
+                                    <div class="grid-line diagonal-1"></div>
+                                    <div class="grid-line diagonal-2"></div>
+                                </div>
+                            `;
+                        }
+                        
+                        // 如果是第一个格子且有生字，显示生字
+                        if (col === 0 && hasCharacter) {
+                            wordHTML += `<div class="character">${currentCharacter}</div>`;
+                        }
+                        
+                        wordHTML += `</td>`;
+                    }
+                    
+                    wordHTML += `</tr>`;
+                }
+                
+                wordHTML += `</table>`;
+                
+                // 页脚
+                wordHTML += `
+                    <div class="page-footer">
+                        <p>小学语文生字字帖生成系统 | ${currentSettings.gridType === 'tian' ? '田字格' : '米字格'}练习本</p>
+                        <p>温馨提示：请使用楷体或毛笔字体进行描红练习，每个生字建议练习5-10遍</p>
+                    </div>
+                `;
+                
+                wordHTML += `</div>`;
+            }
+            
+            wordHTML += `
+                </body>
+                </html>
+            `;
+            
+            // 创建Blob对象
+            const blob = new Blob(
+                ['\ufeff' + wordHTML], // 添加BOM确保中文编码正确
+                { type: 'application/msword' }
+            );
+            
+            // 使用FileSaver保存文件
+            saveAs(blob, fileName);
+            
+            showSuccess('Word文档下载成功！');
+            
+        } catch (error) {
+            console.error('Word导出失败:', error);
+            showError('Word导出失败: ' + error.message);
+            
+            // 尝试简单的备用方案
+            try {
+                await downloadAsWordBackup();
+            } catch (backupError) {
+                console.error('备用方案也失败:', backupError);
+                showError('Word文档生成失败，请尝试其他浏览器或联系管理员');
+            }
+        } finally {
+            hideLoading();
+        }
     }
     
-    showLoading();
+    // 获取Word兼容的字体名称
+    function getFontFamilyName(fontFamily) {
+        const fontMap = {
+            'Ma Shan Zheng, cursive': '楷体', // Word中可能没有毛笔字体，使用楷体代替
+            'KaiTi, serif': '楷体',
+            'SimSun, serif': '宋体',
+            'Microsoft YaHei, sans-serif': '微软雅黑'
+        };
+        return fontMap[fontFamily] || '楷体';
+    }
     
-    try {
-        // 计算每页显示的字符
-        const rowsPerPage = currentSettings.rowsPerPage;
-        const charsPerRow = currentSettings.colsPerPage;
-        const charsPerPage = rowsPerPage; // 每页显示的行数（每行第一个格子有字）
-        const totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
-        
-        // 创建Word文档内容
+    // 备用Word导出方案
+    async function downloadAsWordBackup() {
         const title = previewTitle.textContent || '小学语文生字字帖';
         const date = new Date().toLocaleDateString('zh-CN');
+        const fileName = getValidFileName(title) + '_简版.doc';
         
-        // 创建完整的HTML文档
-        let wordContent = `
+        // 创建简化的Word内容
+        let simpleHTML = `
             <!DOCTYPE html>
-            <html xmlns:o="urn:schemas-microsoft-com:office:office" 
-                  xmlns:w="urn:schemas-microsoft-com:office:word"
-                  xmlns="http://www.w3.org/TR/REC-html40">
+            <html>
             <head>
                 <meta charset="UTF-8">
                 <title>${title}</title>
                 <style>
                     body {
                         font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        line-height: 1.5;
+                        margin: 30px;
+                        line-height: 1.8;
                     }
-                    
-                    .page-container {
-                        width: 794px;
-                        min-height: 1123px;
-                        margin: 0 auto;
-                        padding: 30px;
-                        box-sizing: border-box;
-                        page-break-after: always;
-                        position: relative;
+                    h1 { 
+                        color: #4a6fa5; 
+                        text-align: center; 
+                        font-size: 24px;
+                        margin-bottom: 10px;
                     }
-                    
-                    .page-header {
+                    .info {
                         text-align: center;
-                        margin-bottom: 25px;
-                        padding-bottom: 15px;
-                        border-bottom: 2px solid #4a6fa5;
-                    }
-                    
-                    .page-header h2 {
-                        color: #4a6fa5;
-                        font-size: 28px;
-                        margin: 0 0 10px 0;
-                    }
-                    
-                    .page-header p {
                         color: #666;
-                        margin: 5px 0;
+                        margin-bottom: 30px;
                         font-size: 14px;
                     }
-                    
-                    .grid-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        border: 2px solid #333;
+                    .characters-container {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        margin: 20px 0;
                     }
-                    
-                    .grid-row {
+                    .character-item {
+                        width: 80px;
                         height: 80px;
+                        border: 1px solid #333;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 36px;
+                        font-weight: bold;
+                        background-color: #f9f9f9;
                     }
-                    
-                    .grid-cell {
-                        border: 1px solid #999;
-                        position: relative;
+                    .footer {
                         text-align: center;
-                        vertical-align: middle;
-                        width: ${100 / charsPerRow}%;
-                        height: 80px;
-                    }
-                    
-                    .grid-lines {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                    }
-                    
-                    .grid-line {
-                        position: absolute;
-                        background-color: #ddd;
-                    }
-                    
-                    .center-vertical {
-                        width: 1px;
-                        height: 100%;
-                        left: 50%;
-                        transform: translateX(-50%);
-                    }
-                    
-                    .center-horizontal {
-                        height: 1px;
-                        width: 100%;
-                        top: 50%;
-                        transform: translateY(-50%);
-                    }
-                    
-                    .diagonal-1 {
-                        width: 1px;
-                        height: 141%;
-                        left: 50%;
-                        top: -20%;
-                        transform: translateX(-50%) rotate(45deg);
-                        background-color: #eee;
-                    }
-                    
-                    .diagonal-2 {
-                        width: 1px;
-                        height: 141%;
-                        left: 50%;
-                        top: -20%;
-                        transform: translateX(-50%) rotate(-45deg);
-                        background-color: #eee;
-                    }
-                    
-                    .character {
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        font-family: '${getFontFamilyName(currentSettings.fontFamily)}';
-                        font-size: ${currentSettings.fontSize * 0.7}px;
-                        font-weight: ${currentSettings.fontWeight};
-                        color: ${currentSettings.fontColor};
-                        z-index: 2;
-                    }
-                    
-                    .page-footer {
-                        text-align: center;
-                        margin-top: 20px;
+                        margin-top: 50px;
                         color: #888;
                         font-size: 12px;
-                        padding-top: 10px;
                         border-top: 1px solid #eee;
+                        padding-top: 15px;
                     }
-                    
-                    @page {
-                        size: A4 portrait;
-                        margin: 0;
+                    .grid-hint {
+                        color: #4a6fa5;
+                        font-weight: bold;
+                        margin: 10px 0;
                     }
                 </style>
             </head>
             <body>
+                <h1>${title}</h1>
+                <div class="info">
+                    <p>生成日期: ${date} | 总生字数: ${currentCharacters.length}</p>
+                    <p class="grid-hint">${currentSettings.gridType === 'tian' ? '田字格' : '米字格'}练习字帖</p>
+                </div>
+                <div class="characters-container">
         `;
         
-        // 生成每一页
-        for (let page = 1; page <= totalPages; page++) {
-            wordContent += `<div class="page-container">`;
-            
-            // 页眉
-            wordContent += `
-                <div class="page-header">
-                    <h2>${title}</h2>
-                    <p>规范书写练习 - 共 ${currentCharacters.length} 个生字</p>
-                    <p>第 ${page} 页 / 共 ${totalPages} 页 - 生成日期: ${date}</p>
-                </div>
-            `;
-            
-            // 创建表格
-            wordContent += `<table class="grid-table">`;
-            
-            // 计算当前页的生字
-            const startIndex = (page - 1) * rowsPerPage;
-            const endIndex = Math.min(startIndex + rowsPerPage, currentCharacters.length);
-            const pageCharacters = currentCharacters.slice(startIndex, endIndex);
-            
-            // 生成每一行
-            for (let row = 0; row < rowsPerPage; row++) {
-                const hasCharacter = row < pageCharacters.length;
-                const currentCharacter = hasCharacter ? pageCharacters[row] : '';
-                
-                wordContent += `<tr class="grid-row">`;
-                
-                // 生成每行的8个格子
-                for (let col = 0; col < charsPerRow; col++) {
-                    wordContent += `<td class="grid-cell">`;
-                    
-                    // 添加网格线
-                    if (currentSettings.gridType === 'tian') {
-                        wordContent += `
-                            <div class="grid-lines">
-                                <div class="grid-line center-vertical"></div>
-                                <div class="grid-line center-horizontal"></div>
-                            </div>
-                        `;
-                    } else if (currentSettings.gridType === 'mi') {
-                        wordContent += `
-                            <div class="grid-lines">
-                                <div class="grid-line center-vertical"></div>
-                                <div class="grid-line center-horizontal"></div>
-                                <div class="grid-line diagonal-1"></div>
-                                <div class="grid-line diagonal-2"></div>
-                            </div>
-                        `;
-                    }
-                    
-                    // 如果是第一个格子且有生字，显示生字
-                    if (col === 0 && hasCharacter) {
-                        wordContent += `
-                            <div class="character">${currentCharacter}</div>
-                        `;
-                    }
-                    
-                    wordContent += `</td>`;
-                }
-                
-                wordContent += `</tr>`;
-            }
-            
-            wordContent += `</table>`;
-            
-            // 页脚
-            wordContent += `
-                <div class="page-footer">
-                    <p>小学语文生字字帖生成系统 | 田字格/米字格练习本</p>
-                    <p>温馨提示：请使用楷体或毛笔字体进行描红练习</p>
-                </div>
-            `;
-            
-            wordContent += `</div>`;
-        }
+        // 添加所有生字
+        currentCharacters.forEach(char => {
+            simpleHTML += `<div class="character-item">${char}</div>`;
+        });
         
-        wordContent += `
+        simpleHTML += `
+                </div>
+                <div class="footer">
+                    <p>小学语文生字字帖生成系统</p>
+                    <p>请将每个生字抄写在田字格或米字格练习本上，每个字练习5-10遍</p>
+                </div>
             </body>
             </html>
         `;
         
-        // 使用Blob创建Word文档
+        // 创建Blob并保存
         const blob = new Blob(
-            ['\ufeff' + wordContent], // 添加BOM确保中文编码正确
+            ['\ufeff' + simpleHTML],
             { type: 'application/msword' }
         );
         
-        // 创建下载链接
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = getValidFileName(title) + '.doc';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        showSuccess('Word文档下载成功！');
-        
-    } catch (error) {
-        console.error('Word导出失败:', error);
-        showError('Word导出失败: ' + error.message);
-        
-        // 备用方案：使用纯文本格式
-        try {
-            await downloadAsWordBackup();
-        } catch (backupError) {
-            showError('两种Word生成方式都失败了');
-        }
-    } finally {
-        hideLoading();
-    }
-}
-
-// 辅助函数：获取字体名称
-function getFontFamilyName(fontFamily) {
-    const fontMap = {
-        'Ma Shan Zheng, cursive': 'Ma Shan Zheng',
-        'KaiTi, serif': '楷体',
-        'SimSun, serif': '宋体',
-        'Microsoft YaHei, sans-serif': '微软雅黑'
-    };
-    return fontMap[fontFamily] || '楷体';
-}
-
-// 备用Word导出方案（纯文本）
-async function downloadAsWordBackup() {
-    const title = previewTitle.textContent || '小学语文生字字帖';
-    const date = new Date().toLocaleDateString('zh-CN');
-    
-    // 创建简化的Word文档
-    let wordContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>${title}</title>
-            <style>
-                body {
-                    font-family: 'Microsoft YaHei', 'SimSun', sans-serif;
-                    margin: 30px;
-                    line-height: 1.8;
-                }
-                h1 { color: #4a6fa5; text-align: center; }
-                .character-grid { 
-                    display: inline-block; 
-                    width: 60px; 
-                    height: 60px; 
-                    border: 1px solid #333; 
-                    text-align: center; 
-                    line-height: 60px; 
-                    margin: 5px;
-                    font-size: 24px;
-                }
-                .page-break { page-break-after: always; }
-            </style>
-        </head>
-        <body>
-            <h1>${title}</h1>
-            <p><strong>生成日期:</strong> ${date}</p>
-            <p><strong>总生字数:</strong> ${currentCharacters.length}</p>
-            <hr>
-            <h3>生字列表：</h3>
-    `;
-    
-    // 每行显示10个生字
-    const charsPerLine = 10;
-    for (let i = 0; i < currentCharacters.length; i++) {
-        if (i % charsPerLine === 0 && i > 0) {
-            wordContent += '<br>';
-        }
-        wordContent += `<div class="character-grid">${currentCharacters[i]}</div>`;
+        saveAs(blob, fileName);
     }
     
-    wordContent += `
-            <hr>
-            <p>小学语文生字字帖生成系统</p>
-            <p>如需田字格/米字格版本，请使用在线生成功能</p>
-        </body>
-        </html>
-    `;
-    
-    const blob = new Blob(
-        ['\ufeff' + wordContent],
-        { type: 'application/msword' }
-    );
-    
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = getValidFileName(title) + '_列表.doc';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-        
-        
     // 辅助函数：将十六进制颜色转换为RGB
     function hexToRgb(hex) {
         // 移除#号
@@ -1827,7 +1777,5 @@ async function downloadAsWordBackup() {
     // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', init);
 </script>
-
-        
 </body>
 </html>
