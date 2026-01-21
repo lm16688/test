@@ -456,13 +456,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             overflow: hidden;
-            min-height: 1000px; /* 确保足够高度显示所有行 */
+            min-height: 1100px; /* 确保足够高度显示所有行 */
         }
         
         .grid-page {
             display: none;
             width: 100%;
-            padding: 20px;
+            padding: 40px; /* 增加内边距 */
             box-sizing: border-box;
         }
         
@@ -470,42 +470,26 @@
             display: block;
         }
         
-        /* 关键修复：使用CSS Grid确保每个格子都是正方形 */
+        /* 关键修复：使用固定尺寸的网格确保每个格子都是正方形 */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(8, 1fr); /* 每行8个格子 */
             grid-template-rows: repeat(10, 1fr);   /* 每页10行 */
-            gap: 0;
+            gap: 1px; /* 格子间距 */
             width: 100%;
-            height: 900px; /* 固定高度确保正方形 */
+            height: 900px; /* 固定高度，确保正方形 */
+            margin: 0 auto;
         }
         
         /* 确保每个格子都是真正的正方形 */
         .grid-cell {
             position: relative;
             border: 1px solid #ddd;
-            aspect-ratio: 1 / 1; /* 关键：确保宽高比1:1 */
             width: 100%;
-            height: auto;
+            height: 100%; /* 使用父容器的高度 */
             box-sizing: border-box;
             background-color: white;
             overflow: hidden;
-        }
-        
-        /* 修复边界线 */
-        .grid-cell {
-            border-right: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        /* 每行的最后一个单元格 */
-        .grid-cell:nth-child(8n) {
-            border-right: 1px solid #ddd;
-        }
-        
-        /* 最后一行的单元格 */
-        .grid-cell:nth-child(n+73):nth-child(-n+80) {
-            border-bottom: 1px solid #ddd;
         }
         
         .grid-cell .grid-lines {
@@ -899,6 +883,18 @@
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
 
+    // A4纸尺寸（毫米）
+    const A4_WIDTH_MM = 210;
+    const A4_HEIGHT_MM = 297;
+    const A4_MARGIN_MM = 20; // 页边距
+    const MM_TO_PX = 3.78; // 1毫米 ≈ 3.78像素
+
+    // 计算实际可用尺寸（像素）
+    const usableWidthPx = (A4_WIDTH_MM - A4_MARGIN_MM * 2) * MM_TO_PX;
+    const usableHeightPx = (A4_HEIGHT_MM - A4_MARGIN_MM * 2) * MM_TO_PX;
+
+    console.log(`A4可用尺寸: ${usableWidthPx.toFixed(0)}px × ${usableHeightPx.toFixed(0)}px`);
+
     // 初始化事件监听器
     function initEventListeners() {
         // 年级选择
@@ -1128,7 +1124,7 @@
         }
     }
 
-    // 生成字帖 - 使用CSS Grid确保每个格子都是正方形
+    // 生成字帖 - 根据A4纸尺寸计算格子大小
     function generateCopybook() {
         if (currentCharacters.length === 0) {
             showError('请先选择年级或上传Excel文件');
@@ -1136,7 +1132,6 @@
         }
         
         console.log(`开始生成字帖，总生字数: ${currentCharacters.length}`);
-        console.log('前20个生字:', currentCharacters.slice(0, 20));
         
         showLoading();
         
@@ -1144,14 +1139,30 @@
             const rowsPerPage = currentSettings.rowsPerPage; // 每页10行
             const colsPerRow = currentSettings.colsPerPage; // 每行8个格子
             
-            // 计算总页数 - 每页显示10个生字（每行第一个格子）
+            // 计算总页数
             totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
             
             console.log(`字帖配置: 每页${rowsPerPage}行, 每行${colsPerRow}格, 总页数: ${totalPages}`);
-            console.log(`每页显示生字数: ${rowsPerPage}个`);
             
             // 清空现有页面
             gridPagesContainer.innerHTML = '';
+            
+            // 计算每个格子的理论尺寸（基于A4纸）
+            // 考虑1px的边框和1px的间距
+            const borderWidth = 1;
+            const gapWidth = 1;
+            const totalBorderAndGap = (colsPerRow * 2 * borderWidth) + ((colsPerRow - 1) * gapWidth);
+            const cellSizePx = Math.floor((usableWidthPx - totalBorderAndGap) / colsPerRow);
+            
+            console.log(`每个格子尺寸: ${cellSizePx}px × ${cellSizePx}px`);
+            console.log(`总网格宽度: ${cellSizePx * colsPerRow + totalBorderAndGap}px`);
+            
+            // 计算需要的总高度
+            const totalCellHeight = cellSizePx * rowsPerPage;
+            const totalBorderHeight = (rowsPerPage * 2 * borderWidth) + ((rowsPerPage - 1) * gapWidth);
+            const totalHeightPx = totalCellHeight + totalBorderHeight;
+            
+            console.log(`总网格高度: ${totalHeightPx}px, A4可用高度: ${usableHeightPx}px`);
             
             // 生成所有页面
             for (let page = 1; page <= totalPages; page++) {
@@ -1162,7 +1173,10 @@
                     padding: 20px;
                     box-sizing: border-box;
                     width: 100%;
-                    min-height: 950px;
+                    min-height: ${totalHeightPx + 100}px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-start;
                 `;
                 
                 // 创建网格容器
@@ -1170,11 +1184,12 @@
                 gridContainer.className = 'grid-container';
                 gridContainer.style.cssText = `
                     display: grid;
-                    grid-template-columns: repeat(${colsPerRow}, 1fr);
-                    grid-template-rows: repeat(${rowsPerPage}, 1fr);
-                    gap: 0;
-                    width: 100%;
-                    height: 900px;
+                    grid-template-columns: repeat(${colsPerRow}, ${cellSizePx}px);
+                    grid-template-rows: repeat(${rowsPerPage}, ${cellSizePx}px);
+                    gap: ${gapWidth}px;
+                    width: ${cellSizePx * colsPerRow + ((colsPerRow - 1) * gapWidth)}px;
+                    height: ${cellSizePx * rowsPerPage + ((rowsPerPage - 1) * gapWidth)}px;
+                    margin: 0 auto;
                 `;
                 
                 // 计算当前页的生字
@@ -1195,10 +1210,9 @@
                     cellElement.className = 'grid-cell';
                     cellElement.style.cssText = `
                         position: relative;
-                        border: 1px solid #ddd;
-                        aspect-ratio: 1 / 1;
-                        width: 100%;
-                        height: auto;
+                        border: ${borderWidth}px solid #ddd;
+                        width: ${cellSizePx}px;
+                        height: ${cellSizePx}px;
                         box-sizing: border-box;
                         ${hasCharacter ? 'background-color: white;' : 'background-color: #f9f9f9;'}
                     `;
@@ -1238,7 +1252,7 @@
                         characterElement.textContent = currentCharacter;
                         characterElement.style.cssText = `
                             font-family: ${currentSettings.fontFamily};
-                            font-size: ${currentSettings.fontSize}px;
+                            font-size: ${Math.min(currentSettings.fontSize, cellSizePx * 0.6)}px; /* 根据格子大小调整字体 */
                             font-weight: ${currentSettings.fontWeight};
                             color: ${currentSettings.fontColor};
                             position: absolute;
@@ -1282,8 +1296,6 @@
             downloadWordBtn.disabled = false;
             
             console.log(`字帖生成完成: 总生字数 ${currentCharacters.length}, 总页数 ${totalPages}`);
-            console.log('检查页面元素:', document.querySelectorAll('.grid-page').length, '页');
-            console.log('检查第一页格子数:', document.querySelector('#page-1 .grid-cell').length, '个格子');
             
             setTimeout(() => {
                 hideLoading();
@@ -1307,7 +1319,7 @@
             .substring(0, 50) || '字帖';    // 限制长度
     }
    
-    // 下载为Word文档 - 确保所有10行都能完整显示
+    // 下载为Word文档 - 直接创建适合A4纸的HTML表格
     async function downloadAsWord() {
         if (currentCharacters.length === 0) {
             showError('请先生成字帖');
@@ -1322,155 +1334,14 @@
             const date = new Date().toLocaleDateString('zh-CN');
             const fileName = getValidFileName(title) + '.doc';
             
-            // 保存当前显示状态
-            const originalPages = document.querySelectorAll('.grid-page');
-            const originalDisplayStates = [];
+            const rowsPerPage = currentSettings.rowsPerPage; // 每页10行
+            const colsPerRow = currentSettings.colsPerPage; // 每行8个格子
+            const totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
             
-            // 先显示所有页面
-            originalPages.forEach(page => {
-                originalDisplayStates.push(page.style.display);
-                page.style.display = 'block';
-                page.style.visibility = 'visible';
-                page.style.opacity = '1';
-            });
+            // 计算格子大小（毫米）
+            const cellSizeMM = 20; // 每个格子20mm，确保在A4纸上合适
             
-            // 临时隐藏控制按钮和页脚
-            const previewControls = document.querySelector('.preview-controls');
-            const previewFooter = document.querySelector('.preview-footer');
-            const originalControlsDisplay = previewControls.style.display;
-            const originalFooterDisplay = previewFooter.style.display;
-            previewControls.style.display = 'none';
-            previewFooter.style.display = 'none';
-            
-            // 收集所有页面的图片数据
-            const pageImages = [];
-            
-            console.log(`开始生成Word文档，共 ${totalPages} 页`);
-            
-            // 为每个页面生成图片
-            for (let i = 1; i <= totalPages; i++) {
-                const pageElement = document.getElementById(`page-${i}`);
-                if (pageElement) {
-                    try {
-                        console.log(`正在生成第 ${i} 页图片...`);
-                        
-                        // 确保页面元素有正确的高度和显示
-                        pageElement.style.cssText = `
-                            display: block !important;
-                            visibility: visible !important;
-                            opacity: 1 !important;
-                            position: relative !important;
-                            width: 100% !important;
-                            min-height: 950px !important;
-                            height: auto !important;
-                            overflow: visible !important;
-                            padding: 20px !important;
-                            box-sizing: border-box !important;
-                        `;
-                        
-                        // 确保网格容器正确显示
-                        const gridContainer = pageElement.querySelector('.grid-container');
-                        if (gridContainer) {
-                            gridContainer.style.cssText = `
-                                display: grid !important;
-                                grid-template-columns: repeat(8, 1fr) !important;
-                                grid-template-rows: repeat(10, 1fr) !important;
-                                gap: 0 !important;
-                                width: 100% !important;
-                                height: 900px !important;
-                                visibility: visible !important;
-                                opacity: 1 !important;
-                            `;
-                        }
-                        
-                        // 等待页面重绘
-                        await new Promise(resolve => {
-                            pageElement.offsetHeight; // 触发重绘
-                            setTimeout(resolve, 100);
-                        });
-                        
-                        // 使用html2canvas将页面转换为图片
-                        const canvas = await html2canvas(pageElement, {
-                            scale: 2, // 提高分辨率
-                            backgroundColor: '#ffffff',
-                            useCORS: true,
-                            logging: false,
-                            allowTaint: true,
-                            width: pageElement.offsetWidth,
-                            height: pageElement.scrollHeight,
-                            windowWidth: pageElement.scrollWidth,
-                            windowHeight: pageElement.scrollHeight,
-                            ignoreElements: function(element) {
-                                return element.classList.contains('preview-controls') || 
-                                       element.classList.contains('preview-footer');
-                            },
-                            onclone: function(clonedDoc) {
-                                // 确保克隆的页面也能正确显示
-                                const clonedPage = clonedDoc.getElementById(`page-${i}`);
-                                if (clonedPage) {
-                                    clonedPage.style.cssText = `
-                                        display: block !important;
-                                        visibility: visible !important;
-                                        opacity: 1 !important;
-                                        position: relative !important;
-                                        width: 100% !important;
-                                        min-height: 950px !important;
-                                        height: auto !important;
-                                        overflow: visible !important;
-                                        padding: 20px !important;
-                                        box-sizing: border-box !important;
-                                    `;
-                                    
-                                    const clonedGrid = clonedPage.querySelector('.grid-container');
-                                    if (clonedGrid) {
-                                        clonedGrid.style.cssText = `
-                                            display: grid !important;
-                                            grid-template-columns: repeat(8, 1fr) !important;
-                                            grid-template-rows: repeat(10, 1fr) !important;
-                                            gap: 0 !important;
-                                            width: 100% !important;
-                                            height: 900px !important;
-                                            visibility: visible !important;
-                                            opacity: 1 !important;
-                                        `;
-                                    }
-                                }
-                            }
-                        });
-                        
-                        // 将canvas转换为base64图片
-                        const imageData = canvas.toDataURL('image/png', 1.0);
-                        pageImages.push(imageData);
-                        
-                        console.log(`第 ${i} 页图片生成成功，尺寸: ${canvas.width}x${canvas.height}`);
-                        
-                    } catch (error) {
-                        console.error(`第 ${i} 页图片生成失败:`, error);
-                        throw new Error(`第 ${i} 页转换为图片失败: ${error.message}`);
-                    }
-                } else {
-                    console.error(`找不到第 ${i} 页元素`);
-                    throw new Error(`找不到第 ${i} 页元素`);
-                }
-            }
-            
-            // 恢复原始显示状态
-            originalPages.forEach((page, index) => {
-                page.style.display = originalDisplayStates[index] || (page.classList.contains('active') ? 'block' : 'none');
-                page.style.visibility = '';
-                page.style.opacity = '';
-            });
-            
-            previewControls.style.display = originalControlsDisplay;
-            previewFooter.style.display = originalFooterDisplay;
-            
-            if (pageImages.length === 0) {
-                throw new Error('未能生成任何页面图片');
-            }
-            
-            console.log(`成功生成 ${pageImages.length} 页图片，开始创建Word文档`);
-            
-            // 创建Word文档
+            // 直接创建Word文档HTML
             let wordHTML = `
                 <!DOCTYPE html>
                 <html xmlns:o="urn:schemas-microsoft-com:office:office" 
@@ -1498,7 +1369,7 @@
                         }
                         .header {
                             text-align: center;
-                            margin-bottom: 1cm;
+                            margin-bottom: 1.5cm;
                             padding-bottom: 0.5cm;
                             border-bottom: 2px solid #4a6fa5;
                         }
@@ -1518,14 +1389,76 @@
                             font-size: 10pt;
                             margin: 0.1cm 0;
                         }
-                        .image-container {
-                            text-align: center;
-                            margin: 0.5cm 0;
+                        .copybook-grid {
+                            width: 100%;
+                            margin: 1cm auto;
+                            border-collapse: collapse;
+                            table-layout: fixed;
                         }
-                        .copybook-image {
-                            max-width: 100%;
-                            height: auto;
-                            border: 1px solid #eee;
+                        .grid-row {
+                            height: ${cellSizeMM}mm;
+                        }
+                        .grid-cell {
+                            width: ${cellSizeMM}mm;
+                            height: ${cellSizeMM}mm;
+                            border: 1px solid #ddd;
+                            text-align: center;
+                            vertical-align: middle;
+                            position: relative;
+                            background-color: white;
+                        }
+                        .empty-cell {
+                            background-color: #f9f9f9 !important;
+                        }
+                        .grid-lines {
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            pointer-events: none;
+                        }
+                        .center-vertical {
+                            position: absolute;
+                            width: 0.5pt;
+                            height: 100%;
+                            left: 50%;
+                            top: 0;
+                            background-color: #eee;
+                        }
+                        .center-horizontal {
+                            position: absolute;
+                            height: 0.5pt;
+                            width: 100%;
+                            top: 50%;
+                            left: 0;
+                            background-color: #eee;
+                        }
+                        .diagonal-1 {
+                            position: absolute;
+                            width: 0.5pt;
+                            height: 141%;
+                            left: 50%;
+                            top: -20%;
+                            background-color: #eee;
+                            transform: rotate(45deg);
+                        }
+                        .diagonal-2 {
+                            position: absolute;
+                            width: 0.5pt;
+                            height: 141%;
+                            left: 50%;
+                            top: -20%;
+                            background-color: #eee;
+                            transform: rotate(-45deg);
+                        }
+                        .character {
+                            font-family: ${currentSettings.fontFamily === 'Ma Shan Zheng, cursive' ? "'楷体', 'SimSun', serif" : currentSettings.fontFamily};
+                            font-size: ${Math.min(currentSettings.fontSize * 0.75, 28)}pt;
+                            font-weight: ${currentSettings.fontWeight};
+                            color: ${currentSettings.fontColor};
+                            position: relative;
+                            z-index: 2;
                         }
                         .footer {
                             text-align: center;
@@ -1550,40 +1483,73 @@
             `;
             
             // 为每个页面创建Word页面
-            pageImages.forEach((imageData, index) => {
-                const pageNumber = index + 1;
-                wordHTML += `<div class="word-page ${index < pageImages.length - 1 ? 'page-break' : ''}">`;
+            for (let page = 1; page <= totalPages; page++) {
+                wordHTML += `<div class="word-page ${page < totalPages ? 'page-break' : ''}">`;
                 
                 // 页眉
                 wordHTML += `
                     <div class="header">
                         <h1 class="title">${title}</h1>
                         <p class="subtitle">规范书写练习 - 共 ${currentCharacters.length} 个生字</p>
-                        <p class="info">第 ${pageNumber} 页 / 共 ${pageImages.length} 页 - 生成日期: ${date}</p>
+                        <p class="info">第 ${page} 页 / 共 ${totalPages} 页 - 生成日期: ${date}</p>
                         <p class="info">${currentSettings.gridType === 'tian' ? '田字格' : '米字格'} - 字体: ${getFontFamilyName(currentSettings.fontFamily)} - 每页10个生字</p>
                     </div>
                 `;
                 
-                // 嵌入图片
-                wordHTML += `
-                    <div class="image-container">
-                        <img src="${imageData}" class="copybook-image" alt="字帖第${pageNumber}页" 
-                             style="width: 100%; max-width: 17cm; height: auto;" />
-                    </div>
-                `;
+                // 创建字帖表格
+                wordHTML += `<table class="copybook-grid" cellspacing="0" cellpadding="0">`;
                 
                 // 计算当前页的生字
-                const startIndex = (pageNumber - 1) * currentSettings.rowsPerPage;
-                const endIndex = Math.min(startIndex + currentSettings.rowsPerPage, currentCharacters.length);
+                const startIndex = (page - 1) * rowsPerPage;
+                const endIndex = Math.min(startIndex + rowsPerPage, currentCharacters.length);
                 const pageCharacters = currentCharacters.slice(startIndex, endIndex);
                 
+                // 生成10行
+                for (let row = 0; row < rowsPerPage; row++) {
+                    wordHTML += `<tr class="grid-row">`;
+                    
+                    const hasCharacter = row < pageCharacters.length;
+                    const currentCharacter = hasCharacter ? pageCharacters[row] : '';
+                    
+                    // 生成8列
+                    for (let col = 0; col < colsPerRow; col++) {
+                        const isFirstCol = col === 0;
+                        const isEmpty = !hasCharacter || !isFirstCol;
+                        
+                        wordHTML += `<td class="grid-cell ${isEmpty ? 'empty-cell' : ''}" style="position: relative;">`;
+                        
+                        // 添加网格线
+                        wordHTML += `<div class="grid-lines">`;
+                        wordHTML += `<div class="center-vertical"></div>`;
+                        wordHTML += `<div class="center-horizontal"></div>`;
+                        if (currentSettings.gridType === 'mi') {
+                            wordHTML += `<div class="diagonal-1"></div>`;
+                            wordHTML += `<div class="diagonal-2"></div>`;
+                        }
+                        wordHTML += `</div>`;
+                        
+                        // 如果是第一个格子且有生字，显示生字
+                        if (isFirstCol && hasCharacter) {
+                            wordHTML += `<div class="character">${currentCharacter}</div>`;
+                        }
+                        
+                        wordHTML += `</td>`;
+                    }
+                    
+                    wordHTML += `</tr>`;
+                }
+                
+                wordHTML += `</table>`;
+                
                 // 添加生字列表
-                wordHTML += `
-                    <div style="margin-top: 1cm; text-align: center;">
-                        <p style="color: #4a6fa5; font-weight: bold;">本页生字 (${pageCharacters.length}个):</p>
-                        <p style="font-size: 14pt; letter-spacing: 5px; line-height: 1.8;">${pageCharacters.join(' ')}</p>
-                    </div>
-                `;
+                if (pageCharacters.length > 0) {
+                    wordHTML += `
+                        <div style="margin-top: 1cm; text-align: center;">
+                            <p style="color: #4a6fa5; font-weight: bold;">本页生字 (${pageCharacters.length}个):</p>
+                            <p style="font-size: 14pt; letter-spacing: 5px; line-height: 1.8;">${pageCharacters.join(' ')}</p>
+                        </div>
+                    `;
+                }
                 
                 // 页脚
                 wordHTML += `
@@ -1594,7 +1560,7 @@
                 `;
                 
                 wordHTML += `</div>`;
-            });
+            }
             
             wordHTML += `
                 </body>
@@ -1610,19 +1576,11 @@
             // 使用FileSaver保存文件
             saveAs(blob, fileName);
             
-            showSuccess(`Word文档下载成功！共 ${pageImages.length} 页，每页${currentSettings.rowsPerPage}个生字`);
+            showSuccess(`Word文档下载成功！共 ${totalPages} 页，每页${rowsPerPage}个生字`);
             
         } catch (error) {
             console.error('Word导出失败:', error);
             showError('Word导出失败: ' + error.message);
-            
-            // 尝试备用方案 - 直接创建表格
-            try {
-                await downloadAsWordBackup();
-            } catch (backupError) {
-                console.error('备用方案也失败:', backupError);
-                showError('Word文档生成失败，请尝试其他浏览器或联系管理员');
-            }
         } finally {
             hideLoading();
         }
