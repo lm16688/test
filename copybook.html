@@ -456,13 +456,13 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             overflow: hidden;
-            min-height: 1100px; /* 确保足够高度显示所有行 */
+            min-height: 1000px; /* 确保足够高度显示所有行 */
         }
         
         .grid-page {
             display: none;
             width: 100%;
-            padding: 40px; /* 增加内边距 */
+            padding: 20px;
             box-sizing: border-box;
         }
         
@@ -470,26 +470,42 @@
             display: block;
         }
         
-        /* 关键修复：使用固定尺寸的网格确保每个格子都是正方形 */
+        /* 关键修复：使用CSS Grid确保每个格子都是正方形 */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(8, 1fr); /* 每行8个格子 */
             grid-template-rows: repeat(10, 1fr);   /* 每页10行 */
-            gap: 1px; /* 格子间距 */
+            gap: 0;
             width: 100%;
-            height: 900px; /* 固定高度，确保正方形 */
-            margin: 0 auto;
+            height: 900px; /* 固定高度确保正方形 */
         }
         
         /* 确保每个格子都是真正的正方形 */
         .grid-cell {
             position: relative;
             border: 1px solid #ddd;
+            aspect-ratio: 1 / 1; /* 关键：确保宽高比1:1 */
             width: 100%;
-            height: 100%; /* 使用父容器的高度 */
+            height: auto;
             box-sizing: border-box;
             background-color: white;
             overflow: hidden;
+        }
+        
+        /* 修复边界线 */
+        .grid-cell {
+            border-right: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        /* 每行的最后一个单元格 */
+        .grid-cell:nth-child(8n) {
+            border-right: 1px solid #ddd;
+        }
+        
+        /* 最后一行的单元格 */
+        .grid-cell:nth-child(n+73):nth-child(-n+80) {
+            border-bottom: 1px solid #ddd;
         }
         
         .grid-cell .grid-lines {
@@ -883,18 +899,6 @@
     const errorMessage = document.getElementById('error-message');
     const successMessage = document.getElementById('success-message');
 
-    // A4纸尺寸（毫米）
-    const A4_WIDTH_MM = 210;
-    const A4_HEIGHT_MM = 297;
-    const A4_MARGIN_MM = 20; // 页边距
-    const MM_TO_PX = 3.78; // 1毫米 ≈ 3.78像素
-
-    // 计算实际可用尺寸（像素）
-    const usableWidthPx = (A4_WIDTH_MM - A4_MARGIN_MM * 2) * MM_TO_PX;
-    const usableHeightPx = (A4_HEIGHT_MM - A4_MARGIN_MM * 2) * MM_TO_PX;
-
-    console.log(`A4可用尺寸: ${usableWidthPx.toFixed(0)}px × ${usableHeightPx.toFixed(0)}px`);
-
     // 初始化事件监听器
     function initEventListeners() {
         // 年级选择
@@ -1124,7 +1128,7 @@
         }
     }
 
-    // 生成字帖 - 根据A4纸尺寸计算格子大小
+    // 生成字帖 - 使用CSS Grid确保每个格子都是正方形
     function generateCopybook() {
         if (currentCharacters.length === 0) {
             showError('请先选择年级或上传Excel文件');
@@ -1132,6 +1136,7 @@
         }
         
         console.log(`开始生成字帖，总生字数: ${currentCharacters.length}`);
+        console.log('前20个生字:', currentCharacters.slice(0, 20));
         
         showLoading();
         
@@ -1139,25 +1144,14 @@
             const rowsPerPage = currentSettings.rowsPerPage; // 每页10行
             const colsPerRow = currentSettings.colsPerPage; // 每行8个格子
             
-            // 计算总页数
+            // 计算总页数 - 每页显示10个生字（每行第一个格子）
             totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
             
             console.log(`字帖配置: 每页${rowsPerPage}行, 每行${colsPerRow}格, 总页数: ${totalPages}`);
+            console.log(`每页显示生字数: ${rowsPerPage}个`);
             
             // 清空现有页面
             gridPagesContainer.innerHTML = '';
-            
-            // 计算每个格子的尺寸，确保正方形且适应A4纸
-            // 使用可用宽度的90%来确保有边距
-            const containerWidth = usableWidthPx * 0.9;
-            const containerHeight = usableHeightPx * 0.8;
-            
-            // 计算每个格子的最大可能尺寸
-            const maxCellWidth = Math.floor(containerWidth / colsPerRow);
-            const maxCellHeight = Math.floor(containerHeight / rowsPerPage);
-            const cellSize = Math.min(maxCellWidth, maxCellHeight);
-            
-            console.log(`格子尺寸: ${cellSize}px, 容器: ${containerWidth}px × ${containerHeight}px`);
             
             // 生成所有页面
             for (let page = 1; page <= totalPages; page++) {
@@ -1168,10 +1162,7 @@
                     padding: 20px;
                     box-sizing: border-box;
                     width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: flex-start;
-                    background-color: white;
+                    min-height: 950px;
                 `;
                 
                 // 创建网格容器
@@ -1179,13 +1170,11 @@
                 gridContainer.className = 'grid-container';
                 gridContainer.style.cssText = `
                     display: grid;
-                    grid-template-columns: repeat(${colsPerRow}, ${cellSize}px);
-                    grid-template-rows: repeat(${rowsPerPage}, ${cellSize}px);
-                    gap: 1px;
-                    width: ${cellSize * colsPerRow + (colsPerRow - 1)}px;
-                    height: ${cellSize * rowsPerPage + (rowsPerPage - 1)}px;
-                    margin: 0 auto;
-                    background-color: #ddd;
+                    grid-template-columns: repeat(${colsPerRow}, 1fr);
+                    grid-template-rows: repeat(${rowsPerPage}, 1fr);
+                    gap: 0;
+                    width: 100%;
+                    height: 900px;
                 `;
                 
                 // 计算当前页的生字
@@ -1206,12 +1195,12 @@
                     cellElement.className = 'grid-cell';
                     cellElement.style.cssText = `
                         position: relative;
-                        border: none;
-                        width: ${cellSize}px;
-                        height: ${cellSize}px;
+                        border: 1px solid #ddd;
+                        aspect-ratio: 1 / 1;
+                        width: 100%;
+                        height: auto;
                         box-sizing: border-box;
-                        background-color: white;
-                        overflow: hidden;
+                        ${hasCharacter ? 'background-color: white;' : 'background-color: #f9f9f9;'}
                     `;
                     
                     // 添加方格线
@@ -1249,7 +1238,7 @@
                         characterElement.textContent = currentCharacter;
                         characterElement.style.cssText = `
                             font-family: ${currentSettings.fontFamily};
-                            font-size: ${Math.min(currentSettings.fontSize, cellSize * 0.6)}px;
+                            font-size: ${currentSettings.fontSize}px;
                             font-weight: ${currentSettings.fontWeight};
                             color: ${currentSettings.fontColor};
                             position: absolute;
@@ -1272,7 +1261,6 @@
                         cellElement.classList.remove('empty-cell');
                     } else {
                         cellElement.classList.add('empty-cell');
-                        cellElement.style.backgroundColor = '#f9f9f9';
                     }
                     
                     gridContainer.appendChild(cellElement);
@@ -1294,6 +1282,8 @@
             downloadWordBtn.disabled = false;
             
             console.log(`字帖生成完成: 总生字数 ${currentCharacters.length}, 总页数 ${totalPages}`);
+            console.log('检查页面元素:', document.querySelectorAll('.grid-page').length, '页');
+            console.log('检查第一页格子数:', document.querySelector('#page-1 .grid-cell').length, '个格子');
             
             setTimeout(() => {
                 hideLoading();
@@ -1317,7 +1307,7 @@
             .substring(0, 50) || '字帖';    // 限制长度
     }
    
-    // 下载为Word文档 - 以图片形式，等比例适应A4纸
+    // 下载为Word文档 - 确保所有10行都能完整显示
     async function downloadAsWord() {
         if (currentCharacters.length === 0) {
             showError('请先生成字帖');
@@ -1332,6 +1322,26 @@
             const date = new Date().toLocaleDateString('zh-CN');
             const fileName = getValidFileName(title) + '.doc';
             
+            // 保存当前显示状态
+            const originalPages = document.querySelectorAll('.grid-page');
+            const originalDisplayStates = [];
+            
+            // 先显示所有页面
+            originalPages.forEach(page => {
+                originalDisplayStates.push(page.style.display);
+                page.style.display = 'block';
+                page.style.visibility = 'visible';
+                page.style.opacity = '1';
+            });
+            
+            // 临时隐藏控制按钮和页脚
+            const previewControls = document.querySelector('.preview-controls');
+            const previewFooter = document.querySelector('.preview-footer');
+            const originalControlsDisplay = previewControls.style.display;
+            const originalFooterDisplay = previewFooter.style.display;
+            previewControls.style.display = 'none';
+            previewFooter.style.display = 'none';
+            
             // 收集所有页面的图片数据
             const pageImages = [];
             
@@ -1344,18 +1354,44 @@
                     try {
                         console.log(`正在生成第 ${i} 页图片...`);
                         
-                        // 确保页面元素正确显示
-                        pageElement.style.display = 'block';
-                        pageElement.style.visibility = 'visible';
-                        pageElement.style.opacity = '1';
-                        pageElement.style.position = 'relative';
+                        // 确保页面元素有正确的高度和显示
+                        pageElement.style.cssText = `
+                            display: block !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            position: relative !important;
+                            width: 100% !important;
+                            min-height: 950px !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                            padding: 20px !important;
+                            box-sizing: border-box !important;
+                        `;
                         
-                        // 等待DOM更新
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        // 确保网格容器正确显示
+                        const gridContainer = pageElement.querySelector('.grid-container');
+                        if (gridContainer) {
+                            gridContainer.style.cssText = `
+                                display: grid !important;
+                                grid-template-columns: repeat(8, 1fr) !important;
+                                grid-template-rows: repeat(10, 1fr) !important;
+                                gap: 0 !important;
+                                width: 100% !important;
+                                height: 900px !important;
+                                visibility: visible !important;
+                                opacity: 1 !important;
+                            `;
+                        }
                         
-                        // 使用html2canvas将页面转换为高质量图片
+                        // 等待页面重绘
+                        await new Promise(resolve => {
+                            pageElement.offsetHeight; // 触发重绘
+                            setTimeout(resolve, 100);
+                        });
+                        
+                        // 使用html2canvas将页面转换为图片
                         const canvas = await html2canvas(pageElement, {
-                            scale: 3, // 提高分辨率，确保清晰度
+                            scale: 2, // 提高分辨率
                             backgroundColor: '#ffffff',
                             useCORS: true,
                             logging: false,
@@ -1364,27 +1400,49 @@
                             height: pageElement.scrollHeight,
                             windowWidth: pageElement.scrollWidth,
                             windowHeight: pageElement.scrollHeight,
+                            ignoreElements: function(element) {
+                                return element.classList.contains('preview-controls') || 
+                                       element.classList.contains('preview-footer');
+                            },
                             onclone: function(clonedDoc) {
                                 // 确保克隆的页面也能正确显示
                                 const clonedPage = clonedDoc.getElementById(`page-${i}`);
                                 if (clonedPage) {
-                                    clonedPage.style.display = 'block';
-                                    clonedPage.style.visibility = 'visible';
-                                    clonedPage.style.opacity = '1';
-                                    clonedPage.style.position = 'relative';
+                                    clonedPage.style.cssText = `
+                                        display: block !important;
+                                        visibility: visible !important;
+                                        opacity: 1 !important;
+                                        position: relative !important;
+                                        width: 100% !important;
+                                        min-height: 950px !important;
+                                        height: auto !important;
+                                        overflow: visible !important;
+                                        padding: 20px !important;
+                                        box-sizing: border-box !important;
+                                    `;
+                                    
+                                    const clonedGrid = clonedPage.querySelector('.grid-container');
+                                    if (clonedGrid) {
+                                        clonedGrid.style.cssText = `
+                                            display: grid !important;
+                                            grid-template-columns: repeat(8, 1fr) !important;
+                                            grid-template-rows: repeat(10, 1fr) !important;
+                                            gap: 0 !important;
+                                            width: 100% !important;
+                                            height: 900px !important;
+                                            visibility: visible !important;
+                                            opacity: 1 !important;
+                                        `;
+                                    }
                                 }
                             }
                         });
                         
                         // 将canvas转换为base64图片
                         const imageData = canvas.toDataURL('image/png', 1.0);
-                        pageImages.push({
-                            data: imageData,
-                            width: canvas.width,
-                            height: canvas.height
-                        });
+                        pageImages.push(imageData);
                         
-                        console.log(`第 ${i} 页图片生成成功，原始尺寸: ${canvas.width}x${canvas.height}`);
+                        console.log(`第 ${i} 页图片生成成功，尺寸: ${canvas.width}x${canvas.height}`);
                         
                     } catch (error) {
                         console.error(`第 ${i} 页图片生成失败:`, error);
@@ -1395,6 +1453,16 @@
                     throw new Error(`找不到第 ${i} 页元素`);
                 }
             }
+            
+            // 恢复原始显示状态
+            originalPages.forEach((page, index) => {
+                page.style.display = originalDisplayStates[index] || (page.classList.contains('active') ? 'block' : 'none');
+                page.style.visibility = '';
+                page.style.opacity = '';
+            });
+            
+            previewControls.style.display = originalControlsDisplay;
+            previewFooter.style.display = originalFooterDisplay;
             
             if (pageImages.length === 0) {
                 throw new Error('未能生成任何页面图片');
@@ -1452,15 +1520,12 @@
                         }
                         .image-container {
                             text-align: center;
-                            margin: 0.5cm auto;
-                            width: 100%;
+                            margin: 0.5cm 0;
                         }
                         .copybook-image {
                             max-width: 100%;
                             height: auto;
                             border: 1px solid #eee;
-                            display: block;
-                            margin: 0 auto;
                         }
                         .footer {
                             text-align: center;
@@ -1485,7 +1550,7 @@
             `;
             
             // 为每个页面创建Word页面
-            pageImages.forEach((imageInfo, index) => {
+            pageImages.forEach((imageData, index) => {
                 const pageNumber = index + 1;
                 wordHTML += `<div class="word-page ${index < pageImages.length - 1 ? 'page-break' : ''}">`;
                 
@@ -1499,12 +1564,11 @@
                     </div>
                 `;
                 
-                // 嵌入图片 - 等比例适应A4纸
-                const maxImageWidth = '17cm'; // A4纸宽度减去页边距
+                // 嵌入图片
                 wordHTML += `
                     <div class="image-container">
-                        <img src="${imageInfo.data}" class="copybook-image" alt="字帖第${pageNumber}页" 
-                             style="max-width: ${maxImageWidth}; height: auto;" />
+                        <img src="${imageData}" class="copybook-image" alt="字帖第${pageNumber}页" 
+                             style="width: 100%; max-width: 17cm; height: auto;" />
                     </div>
                 `;
                 
@@ -1551,6 +1615,14 @@
         } catch (error) {
             console.error('Word导出失败:', error);
             showError('Word导出失败: ' + error.message);
+            
+            // 尝试备用方案 - 直接创建表格
+            try {
+                await downloadAsWordBackup();
+            } catch (backupError) {
+                console.error('备用方案也失败:', backupError);
+                showError('Word文档生成失败，请尝试其他浏览器或联系管理员');
+            }
         } finally {
             hideLoading();
         }
