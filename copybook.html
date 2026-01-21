@@ -461,6 +461,7 @@
         .grid-page {
             display: none;
             width: 100%;
+            min-height: 800px; /* 确保足够高度显示所有行 */
         }
         
         .grid-page.active {
@@ -470,13 +471,15 @@
         .grid-row {
             display: flex;
             width: 100%;
+            height: 80px; /* 固定行高，确保每行高度一致 */
         }
         
         .grid-cell {
             flex: 1;
-            aspect-ratio: 1/1;
             position: relative;
             border: 1px solid #ddd;
+            height: 100%; /* 继承父元素高度 */
+            min-height: 80px;
         }
         
         .grid-cell:nth-child(odd) {
@@ -616,6 +619,14 @@
             
             .action-buttons {
                 flex-direction: column;
+            }
+            
+            .grid-row {
+                height: 60px; /* 移动端行高减小 */
+            }
+            
+            .grid-cell {
+                min-height: 60px;
             }
         }
     </style>
@@ -1072,7 +1083,7 @@
         }
     }
 
-    // 生成字帖 - 修复版本，确保所有生字都被生成
+    // 生成字帖 - 确保每页显示10个生字
     function generateCopybook() {
         if (currentCharacters.length === 0) {
             showError('请先选择年级或上传Excel文件');
@@ -1085,15 +1096,13 @@
         showLoading();
         
         try {
-            // 计算总页数 - 每行8个格子，每页10行
-            const charactersPerRow = currentSettings.colsPerPage; // 每行8个字
             const rowsPerPage = currentSettings.rowsPerPage; // 每页10行
-            const charactersPerPage = rowsPerPage * 1; // 每页显示的生字数 = 行数 * 1（每行第一个格子）
+            const colsPerRow = currentSettings.colsPerPage; // 每行8个格子
             
-            // 注意：我们只在每行的第一个格子显示生字，所以每页实际显示的生字数 = 行数
+            // 计算总页数 - 每页显示10个生字（每行第一个格子）
             totalPages = Math.ceil(currentCharacters.length / rowsPerPage);
             
-            console.log(`字帖配置: 每页${rowsPerPage}行, 每行${charactersPerRow}格, 总页数: ${totalPages}`);
+            console.log(`字帖配置: 每页${rowsPerPage}行, 每行${colsPerRow}格, 总页数: ${totalPages}`);
             console.log(`每页显示生字数: ${rowsPerPage}个`);
             
             // 清空现有页面
@@ -1104,6 +1113,8 @@
                 const pageElement = document.createElement('div');
                 pageElement.className = `grid-page ${page === 1 ? 'active' : ''}`;
                 pageElement.id = `page-${page}`;
+                pageElement.style.padding = '20px'; // 添加内边距确保内容完整
+                pageElement.style.boxSizing = 'border-box';
                 
                 // 计算当前页的生字
                 const startIndex = (page - 1) * rowsPerPage;
@@ -1122,7 +1133,7 @@
                     const currentCharacter = hasCharacter ? pageCharacters[row] : '';
                     
                     // 生成8个格子
-                    for (let col = 0; col < charactersPerRow; col++) {
+                    for (let col = 0; col < colsPerRow; col++) {
                         const cellElement = document.createElement('div');
                         cellElement.className = 'grid-cell';
                         
@@ -1183,7 +1194,6 @@
             updatePageControls();
             
             // 更新统计信息
-            const totalCharactersDisplayed = Math.min(currentCharacters.length, rowsPerPage * totalPages);
             characterCount.textContent = `共 ${currentCharacters.length} 个生字，${totalPages} 页，每页 ${rowsPerPage} 个生字`;
             
             // 启用下载按钮
@@ -1213,7 +1223,7 @@
             .substring(0, 50) || '字帖';    // 限制长度
     }
    
-    // 下载为Word文档 - 使用图片嵌入方式确保格式完全保留
+    // 下载为Word文档 - 修复版：确保每页10个生字都完整显示
     async function downloadAsWord() {
         if (currentCharacters.length === 0) {
             showError('请先生成字帖');
@@ -1228,20 +1238,17 @@
             const date = new Date().toLocaleDateString('zh-CN');
             const fileName = getValidFileName(title) + '.doc';
             
-            // 收集所有页面的图片数据
-            const pageImages = [];
-            
             // 保存当前显示状态
             const originalPages = document.querySelectorAll('.grid-page');
             const originalDisplayStates = [];
             
-            // 先隐藏所有页面
+            // 先显示所有页面
             originalPages.forEach(page => {
                 originalDisplayStates.push(page.style.display);
                 page.style.display = 'block';
             });
             
-            // 临时显示控制按钮和页脚
+            // 临时隐藏控制按钮和页脚
             const previewControls = document.querySelector('.preview-controls');
             const previewFooter = document.querySelector('.preview-footer');
             const originalControlsDisplay = previewControls.style.display;
@@ -1249,39 +1256,80 @@
             previewControls.style.display = 'none';
             previewFooter.style.display = 'none';
             
+            // 收集所有页面的图片数据
+            const pageImages = [];
+            
+            console.log(`开始生成Word文档，共 ${totalPages} 页`);
+            
             // 为每个页面生成图片
             for (let i = 1; i <= totalPages; i++) {
                 const pageElement = document.getElementById(`page-${i}`);
                 if (pageElement) {
                     try {
+                        console.log(`正在生成第 ${i} 页图片...`);
+                        
+                        // 确保页面元素有足够的高度显示所有内容
+                        const rowsPerPage = currentSettings.rowsPerPage;
+                        const rowHeight = 80; // 每行高度
+                        const pageHeight = rowsPerPage * rowHeight + 40; // 总高度 + 内边距
+                        
+                        pageElement.style.height = `${pageHeight}px`;
+                        pageElement.style.overflow = 'visible'; // 确保内容不隐藏
+                        
                         // 使用html2canvas将页面转换为图片
                         const canvas = await html2canvas(pageElement, {
                             scale: 2, // 提高分辨率
                             backgroundColor: '#ffffff',
                             useCORS: true,
                             logging: false,
-                            allowTaint: true
+                            allowTaint: true,
+                            width: pageElement.scrollWidth, // 使用实际宽度
+                            height: pageElement.scrollHeight, // 使用实际高度
+                            windowWidth: pageElement.scrollWidth,
+                            windowHeight: pageElement.scrollHeight,
+                            onclone: function(clonedDoc) {
+                                // 确保克隆的页面也能正确显示
+                                const clonedPage = clonedDoc.getElementById(`page-${i}`);
+                                if (clonedPage) {
+                                    clonedPage.style.display = 'block';
+                                    clonedPage.style.overflow = 'visible';
+                                    clonedPage.style.height = 'auto';
+                                    clonedPage.style.minHeight = `${pageHeight}px`;
+                                }
+                            }
                         });
                         
                         // 将canvas转换为base64图片
                         const imageData = canvas.toDataURL('image/png', 1.0);
                         pageImages.push(imageData);
                         
-                        console.log(`第 ${i} 页图片生成成功`);
+                        console.log(`第 ${i} 页图片生成成功，尺寸: ${canvas.width}x${canvas.height}`);
+                        
                     } catch (error) {
                         console.error(`第 ${i} 页图片生成失败:`, error);
-                        throw new Error(`第 ${i} 页转换为图片失败`);
+                        throw new Error(`第 ${i} 页转换为图片失败: ${error.message}`);
                     }
+                } else {
+                    console.error(`找不到第 ${i} 页元素`);
+                    throw new Error(`找不到第 ${i} 页元素`);
                 }
             }
             
             // 恢复原始显示状态
             originalPages.forEach((page, index) => {
                 page.style.display = originalDisplayStates[index] || (page.classList.contains('active') ? 'block' : 'none');
+                page.style.height = ''; // 恢复高度
+                page.style.overflow = ''; // 恢复溢出设置
             });
             
             previewControls.style.display = originalControlsDisplay;
             previewFooter.style.display = originalFooterDisplay;
+            
+            if (pageImages.length === 0) {
+                throw new Error('未能生成任何页面图片');
+            }
+            
+            console.log(`成功生成 ${pageImages.length} 页图片，开始创建Word文档`);
             
             // 创建Word文档
             let wordHTML = `
@@ -1358,6 +1406,7 @@
             
             // 为每个页面创建Word页面
             pageImages.forEach((imageData, index) => {
+                const pageNumber = index + 1;
                 wordHTML += `<div class="word-page ${index < pageImages.length - 1 ? 'page-break' : ''}">`;
                 
                 // 页眉
@@ -1365,15 +1414,28 @@
                     <div class="header">
                         <h1 class="title">${title}</h1>
                         <p class="subtitle">规范书写练习 - 共 ${currentCharacters.length} 个生字</p>
-                        <p class="info">第 ${index + 1} 页 / 共 ${pageImages.length} 页 - 生成日期: ${date}</p>
-                        <p class="info">${currentSettings.gridType === 'tian' ? '田字格' : '米字格'} - 字体: ${getFontFamilyName(currentSettings.fontFamily)}</p>
+                        <p class="info">第 ${pageNumber} 页 / 共 ${pageImages.length} 页 - 生成日期: ${date}</p>
+                        <p class="info">${currentSettings.gridType === 'tian' ? '田字格' : '米字格'} - 字体: ${getFontFamilyName(currentSettings.fontFamily)} - 每页10个生字</p>
                     </div>
                 `;
                 
                 // 嵌入图片
                 wordHTML += `
                     <div class="image-container">
-                        <img src="${imageData}" class="copybook-image" alt="字帖第${index + 1}页" />
+                        <img src="${imageData}" class="copybook-image" alt="字帖第${pageNumber}页" style="width: 100%; max-width: 17cm;" />
+                    </div>
+                `;
+                
+                // 计算当前页的生字
+                const startIndex = (pageNumber - 1) * currentSettings.rowsPerPage;
+                const endIndex = Math.min(startIndex + currentSettings.rowsPerPage, currentCharacters.length);
+                const pageCharacters = currentCharacters.slice(startIndex, endIndex);
+                
+                // 添加生字列表
+                wordHTML += `
+                    <div style="margin-top: 1cm; text-align: center;">
+                        <p style="color: #4a6fa5; font-weight: bold;">本页生字 (${pageCharacters.length}个):</p>
+                        <p style="font-size: 14pt; letter-spacing: 5px; line-height: 1.8;">${pageCharacters.join(' ')}</p>
                     </div>
                 `;
                 
@@ -1402,7 +1464,7 @@
             // 使用FileSaver保存文件
             saveAs(blob, fileName);
             
-            showSuccess('Word文档下载成功！字帖已完美保存为图片格式');
+            showSuccess(`Word文档下载成功！共 ${pageImages.length} 页，每页10个生字`);
             
         } catch (error) {
             console.error('Word导出失败:', error);
@@ -1463,7 +1525,7 @@
             <body>
                 <h1>${title}</h1>
                 <p style="text-align: center;">共 ${currentCharacters.length} 个生字 - ${currentSettings.gridType === 'tian' ? '田字格' : '米字格'}练习本</p>
-                <p style="text-align: center; color: #666;">生成日期: ${date}</p>
+                <p style="text-align: center; color: #666;">生成日期: ${date} - 每页10个生字</p>
         `;
         
         // 生成每一页
@@ -1504,6 +1566,12 @@
             }
             
             wordHTML += `</table>`;
+            
+            // 添加生字列表
+            if (pageCharacters.length > 0) {
+                wordHTML += `<p style="text-align: center; margin-top: 0.5cm;">本页生字: ${pageCharacters.join(' ')}</p>`;
+            }
+            
             wordHTML += `</div>`;
         }
         
@@ -1525,19 +1593,6 @@
         saveAs(blob, fileName);
     }
     
-    // 辅助函数：将十六进制颜色转换为RGB
-    function hexToRgb(hex) {
-        // 移除#号
-        hex = hex.replace('#', '');
-        
-        // 解析RGB值
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        
-        return { r, g, b };
-    }
-
     // 更新字帖预览
     function updateCopybookPreview() {
         if (currentCharacters.length === 0) return;
