@@ -240,9 +240,13 @@
             color: #4a90e2;
         }
         
-        .booklist-time {
+        .booklist-month {
             color: #999;
             font-size: 13px;
+            background-color: #f0f7ff;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
         }
         
         .booklist-title {
@@ -605,9 +609,12 @@
             font-size: 16px;
         }
         
-        .detail-time {
+        .detail-month {
             font-size: 14px;
             opacity: 0.9;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
         }
         
         .booklist-detail-content {
@@ -855,7 +862,18 @@
                     <h3><i class="fas fa-calendar-alt"></i>按月份筛选</h3>
                     <select id="monthFilter" class="filter-select">
                         <option value="all">全部月份</option>
-                        <!-- 月份选项将通过JavaScript动态生成 -->
+                        <option value="1">1月</option>
+                        <option value="2">2月</option>
+                        <option value="3">3月</option>
+                        <option value="4">4月</option>
+                        <option value="5">5月</option>
+                        <option value="6">6月</option>
+                        <option value="7">7月</option>
+                        <option value="8">8月</option>
+                        <option value="9">9月</option>
+                        <option value="10">10月</option>
+                        <option value="11">11月</option>
+                        <option value="12">12月</option>
                     </select>
                 </div>
             </div>
@@ -921,6 +939,25 @@
                     </div>
                     
                     <div class="form-group">
+                        <label class="form-label" for="month">选择月份 *</label>
+                        <select id="month" class="form-select" required>
+                            <option value="">请选择月份</option>
+                            <option value="1">1月</option>
+                            <option value="2">2月</option>
+                            <option value="3">3月</option>
+                            <option value="4">4月</option>
+                            <option value="5">5月</option>
+                            <option value="6">6月</option>
+                            <option value="7">7月</option>
+                            <option value="8">8月</option>
+                            <option value="9">9月</option>
+                            <option value="10">10月</option>
+                            <option value="11">11月</option>
+                            <option value="12">12月</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
                         <label class="form-label">选择书单背景</label>
                         <div class="bg-selector" id="bgSelector">
                             <!-- 背景选项将通过JavaScript动态生成 -->
@@ -956,7 +993,7 @@
                         <i class="fas fa-user"></i>
                         <span id="detailCreator">用户昵称</span>
                     </div>
-                    <div class="detail-time" id="detailTime">2023年10月15日</div>
+                    <div class="detail-month" id="detailMonth">1月</div>
                 </div>
             </div>
             
@@ -1007,6 +1044,13 @@
             'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
         ];
         
+        // 月份名称
+        const monthNames = {
+            '1': '1月', '2': '2月', '3': '3月', '4': '4月',
+            '5': '5月', '6': '6月', '7': '7月', '8': '8月',
+            '9': '9月', '10': '10月', '11': '11月', '12': '12月'
+        };
+        
         // DOM元素
         let createBooklistBtn, booklistModal, detailModal, closeModalBtn, cancelBtn;
         let saveBooklistBtn, booklistForm, booklistGrid, emptyState, bgSelector;
@@ -1019,7 +1063,6 @@
             initDOMElements();
             initPage();
             renderBooklists();
-            populateMonthFilter();
             setupEventListeners();
             
             // 检查是否有当前用户
@@ -1029,6 +1072,8 @@
                     nicknameInput.value = currentUser;
                 }
             }
+            
+            console.log('页面加载完成，当前书单数量:', booklists.length);
         });
         
         // 初始化DOM元素引用
@@ -1077,35 +1122,56 @@
             }
         }
         
-        // 填充月份筛选器
-        function populateMonthFilter() {
-            const months = [
-                '全部月份', '1月', '2月', '3月', '4月', '5月', '6月',
-                '7月', '8月', '9月', '10月', '11月', '12月'
-            ];
-            
-            months.forEach((month, index) => {
-                const option = document.createElement('option');
-                option.value = index === 0 ? 'all' : index;
-                option.textContent = month;
-                monthFilter.appendChild(option);
-            });
-        }
-        
         // 设置事件监听器
         function setupEventListeners() {
+            console.log('开始设置事件监听器...');
+            
             // 创建书单按钮
             if (createBooklistBtn) {
-                createBooklistBtn.addEventListener('click', openCreateModal);
+                console.log('找到创建书单按钮');
+                createBooklistBtn.addEventListener('click', function(e) {
+                    console.log('创建书单按钮被点击了！');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openCreateModal();
+                });
+            } else {
+                console.error('未找到创建书单按钮！');
             }
             
             // 关闭模态框按钮
-            if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-            if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-            if (closeDetailBtn) closeDetailBtn.addEventListener('click', closeDetailModal);
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeModal();
+                });
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeModal();
+                });
+            }
+            
+            if (closeDetailBtn) {
+                closeDetailBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeDetailModal();
+                });
+            }
             
             // 保存书单按钮
-            if (saveBooklistBtn) saveBooklistBtn.addEventListener('click', saveBooklist);
+            if (saveBooklistBtn) {
+                saveBooklistBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    saveBooklist();
+                });
+            }
             
             // 筛选和搜索
             if (subjectFilter) subjectFilter.addEventListener('change', filterBooklists);
@@ -1120,7 +1186,13 @@
             }
             
             // 提交评论
-            if (submitCommentBtn) submitCommentBtn.addEventListener('click', submitComment);
+            if (submitCommentBtn) {
+                submitCommentBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    submitComment();
+                });
+            }
             
             // 点击模态框外部关闭
             if (booklistModal) {
@@ -1143,14 +1215,17 @@
             if (booklistForm) {
                 booklistForm.addEventListener('submit', function(e) {
                     e.preventDefault();
+                    e.stopPropagation();
                     saveBooklist();
                 });
             }
+            
+            console.log('事件监听器设置完成');
         }
         
         // 打开创建书单模态框
         function openCreateModal() {
-            console.log('打开创建书单模态框');
+            console.log('打开创建书单模态框函数被调用');
             document.getElementById('modalTitle').textContent = '创建书单';
             booklistForm.reset();
             document.getElementById('booklistId').value = '';
@@ -1169,7 +1244,11 @@
                 document.getElementById('nickname').value = currentUser;
             }
             
+            // 重置月份选择
+            document.getElementById('month').selectedIndex = 0;
+            
             booklistModal.style.display = 'flex';
+            console.log('模态框已显示');
         }
         
         // 打开编辑书单模态框
@@ -1178,6 +1257,7 @@
             document.getElementById('nickname').value = booklist.creator;
             document.getElementById('title').value = booklist.title;
             document.getElementById('subject').value = booklist.subject;
+            document.getElementById('month').value = booklist.month || '1';
             document.getElementById('content').value = booklist.content;
             document.getElementById('booklistId').value = booklist.id;
             editingBooklistId = booklist.id;
@@ -1204,7 +1284,7 @@
             document.getElementById('detailCategory').textContent = booklist.subject;
             document.getElementById('detailTitle').textContent = booklist.title;
             document.getElementById('detailCreator').textContent = booklist.creator;
-            document.getElementById('detailTime').textContent = formatDate(booklist.createdAt);
+            document.getElementById('detailMonth').textContent = monthNames[booklist.month] || '1月';
             document.getElementById('detailContent').textContent = booklist.content;
             
             // 加载评论
@@ -1226,16 +1306,21 @@
         
         // 保存书单
         function saveBooklist() {
+            console.log('保存书单函数被调用');
+            
             const nickname = document.getElementById('nickname').value.trim();
             const title = document.getElementById('title').value.trim();
             const subject = document.getElementById('subject').value;
+            const month = document.getElementById('month').value;
             const content = document.getElementById('content').value.trim();
             const booklistId = document.getElementById('booklistId').value;
             const selectedBg = document.querySelector('.bg-option.selected');
             const bgIndex = selectedBg ? parseInt(selectedBg.dataset.index) : 0;
             
+            console.log('表单数据:', { nickname, title, subject, month, content });
+            
             // 验证输入
-            if (!nickname || !title || !subject || !content) {
+            if (!nickname || !title || !subject || !month || !content) {
                 alert('请填写所有必填字段！');
                 return;
             }
@@ -1253,10 +1338,12 @@
                         creator: nickname,
                         title,
                         subject,
+                        month,
                         content,
                         bgIndex,
                         updatedAt: new Date().toISOString()
                     };
+                    console.log('更新书单:', booklists[index]);
                 }
             } else {
                 // 创建新书单
@@ -1265,6 +1352,7 @@
                     creator: nickname,
                     title,
                     subject,
+                    month, // 保存用户选择的月份
                     content,
                     bgIndex,
                     createdAt: new Date().toISOString(),
@@ -1272,6 +1360,7 @@
                     comments: []
                 };
                 
+                console.log('创建新书单:', newBooklist);
                 booklists.unshift(newBooklist);
             }
             
@@ -1387,6 +1476,8 @@
         function renderBooklists(filteredBooklists = null) {
             const displayBooklists = filteredBooklists || booklists;
             
+            console.log('渲染书单列表，数量:', displayBooklists.length);
+            
             if (displayBooklists.length === 0) {
                 emptyState.style.display = 'block';
                 booklistGrid.innerHTML = '';
@@ -1429,6 +1520,7 @@
                 editBtn.innerHTML = '<i class="fas fa-edit"></i>';
                 editBtn.title = '编辑';
                 editBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     openEditModal(booklist);
                 });
@@ -1438,6 +1530,7 @@
                 deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
                 deleteBtn.title = '删除';
                 deleteBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     deleteBooklist(booklist.id);
                 });
@@ -1460,12 +1553,12 @@
             creatorDiv.className = 'booklist-creator';
             creatorDiv.innerHTML = `<i class="fas fa-user-circle"></i>${booklist.creator}`;
             
-            const timeDiv = document.createElement('div');
-            timeDiv.className = 'booklist-time';
-            timeDiv.textContent = formatDate(booklist.createdAt);
+            const monthDiv = document.createElement('div');
+            monthDiv.className = 'booklist-month';
+            monthDiv.textContent = monthNames[booklist.month] || '1月';
             
             metaDiv.appendChild(creatorDiv);
-            metaDiv.appendChild(timeDiv);
+            metaDiv.appendChild(monthDiv);
             
             const titleDiv = document.createElement('h3');
             titleDiv.className = 'booklist-title';
@@ -1494,8 +1587,11 @@
             card.appendChild(contentDiv);
             
             // 点击卡片查看详情
-            card.addEventListener('click', function() {
-                openDetailModal(booklist);
+            card.addEventListener('click', function(e) {
+                // 防止点击操作按钮时触发详情
+                if (!e.target.closest('.booklist-actions')) {
+                    openDetailModal(booklist);
+                }
             });
             
             return card;
@@ -1516,11 +1612,9 @@
             
             // 按月份筛选
             if (month !== 'all') {
-                const monthNum = parseInt(month);
-                filtered = filtered.filter(booklist => {
-                    const date = new Date(booklist.createdAt);
-                    return date.getMonth() + 1 === monthNum;
-                });
+                filtered = filtered.filter(booklist => 
+                    booklist.month.toString() === month
+                );
             }
             
             // 按创建者昵称搜索
@@ -1530,6 +1624,7 @@
                 );
             }
             
+            console.log('筛选结果数量:', filtered.length);
             renderBooklists(filtered);
         }
         
