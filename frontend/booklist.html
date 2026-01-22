@@ -7,8 +7,960 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
     <style>
-        /* 所有样式与之前相同，这里只列出关键修改 */
-        /* ... 保持原有样式不变 ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #4a90e2;
+            padding: 12px 0;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-link.active {
+            background-color: #2c6cb0;
+        }
+        
+        .nav-link i {
+            margin-right: 8px;
+        }
+        
+        /* 认证容器 */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+        
+        .auth-box {
+            background-color: white;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .auth-box h2 {
+            text-align: center;
+            color: #4a6fa5;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .auth-box input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .auth-box input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+        
+        .auth-box .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .auth-box .btn-primary:hover {
+            background-color: #3a80d2;
+        }
+        
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            cursor: pointer;
+        }
+        
+        .auth-link:hover {
+            color: #4a90e2;
+            text-decoration: underline;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            display: none;
+        }
+        
+        /* 页面头部 */
+        .booklist-header {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .booklist-header h1 {
+            font-size: 32px;
+            color: #4a6fa5;
+            margin-bottom: 15px;
+        }
+        
+        .booklist-header p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+        
+        .create-booklist-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #4a90e2, #2c6cb0);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .create-booklist-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+        
+        /* 筛选和搜索区域 */
+        .filter-search-section {
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group h3 {
+            font-size: 16px;
+            color: #4a6fa5;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .filter-select:hover, .filter-select:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-top: 10px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+        
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        /* 书单卡片网格 */
+        .booklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .booklist-card {
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .booklist-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .booklist-bg {
+            height: 120px;
+            width: 100%;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        
+        .booklist-category {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #4a6fa5;
+        }
+        
+        .booklist-content {
+            padding: 20px;
+        }
+        
+        .booklist-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .booklist-creator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .booklist-creator i {
+            color: #4a90e2;
+        }
+        
+        .booklist-date {
+            color: #999;
+            font-size: 13px;
+            background-color: #f0f7ff;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+        
+        .booklist-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        
+        .booklist-desc {
+            color: #666;
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 72px;
+        }
+        
+        .booklist-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #888;
+        }
+        
+        .booklist-comments, .booklist-views {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* 卡片操作按钮 */
+        .booklist-actions {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .booklist-card:hover .booklist-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .edit-btn {
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background-color: #3498db;
+        }
+        
+        .delete-btn {
+            background-color: rgba(231, 76, 60, 0.9);
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background-color: #e74c3c;
+        }
+        
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4a90e2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .empty-icon {
+            font-size: 60px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 24px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            color: #aaa;
+            font-size: 16px;
+        }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 30px;
+            padding: 20px;
+        }
+        
+        .pagination button {
+            padding: 10px 20px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .pagination button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .pagination span {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal {
+            background-color: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #4a6fa5;
+            font-size: 24px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            line-height: 1;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        .modal-close:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: #4a90e2;
+            outline: none;
+            background-color: white;
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        /* 背景选择器 */
+        .bg-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .bg-option {
+            height: 60px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .bg-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .bg-option.selected {
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: #4a90e2;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a80d2;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e5e5e5;
+        }
+        
+        /* 详情模态框样式 */
+        .detail-modal .modal {
+            max-width: 800px;
+        }
+        
+        .booklist-detail-header {
+            padding: 25px;
+            color: white;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+        }
+        
+        .detail-category {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a6fa5;
+        }
+        
+        .detail-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            z-index: 2;
+            position: relative;
+            color: white;
+        }
+        
+        .detail-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .detail-creator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        
+        .detail-date {
+            font-size: 14px;
+            opacity: 0.9;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+        }
+        
+        .booklist-detail-content {
+            padding: 25px;
+        }
+        
+        .detail-desc {
+            font-size: 17px;
+            line-height: 1.7;
+            color: #444;
+            margin-bottom: 30px;
+            white-space: pre-line;
+        }
+        
+        .comments-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 25px;
+        }
+        
+        .comments-section h3 {
+            font-size: 20px;
+            color: #4a6fa5;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .comment-form {
+            margin-bottom: 30px;
+        }
+        
+        .comment-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+            margin-bottom: 15px;
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .comment-input:focus {
+            border-color: #4a90e2;
+            outline: none;
+            background-color: white;
+        }
+        
+        .comments-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .comment-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .comment-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .comment-user {
+            font-weight: 500;
+            color: #4a6fa5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .comment-content {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .comment-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .reply-btn {
+            background: none;
+            border: none;
+            color: #4a90e2;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .reply-btn:hover {
+            text-decoration: underline;
+        }
+        
+        .no-comments {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+        }
+        
+        /* 消息提示 */
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success {
+            background-color: #2ecc71;
+        }
+        
+        .message.error {
+            background-color: #e74c3c;
+        }
+        
+        .message.info {
+            background-color: #3498db;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .booklist-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+            
+            .modal {
+                margin: 10px;
+            }
+            
+            .bg-selector {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .filter-row {
+                flex-direction: column;
+            }
+            
+            .nav-container {
+                gap: 15px;
+            }
+            
+            .nav-link {
+                padding: 8px 15px;
+                font-size: 16px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .booklist-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .bg-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .modal-footer {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-link {
+                width: 100%;
+                text-align: center;
+                padding: 10px;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -123,15 +1075,47 @@
                 </div>
                 
                 <div v-else>
-                    <booklist-card 
-                        v-for="booklist in booklists" 
-                        :key="booklist._id"
-                        :booklist="booklist"
-                        :current-user="currentUser"
-                        @view-detail="openDetailModal"
-                        @edit="openEditModal"
-                        @delete="deleteBooklist"
-                    />
+                    <div v-for="booklist in booklists" :key="booklist._id" class="booklist-card" @click="openDetailModal(booklist)">
+                        <div class="booklist-bg" :style="{ background: booklist.bgColor || '#4a90e2' }">
+                            <div class="booklist-category">
+                                <i class="fas fa-tag"></i>{{ booklist.subject }}
+                            </div>
+                            <div class="booklist-actions" v-if="booklist.creator._id === currentUser?.id">
+                                <button class="action-btn edit-btn" @click.stop="openEditModal(booklist)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn" @click.stop="deleteBooklist(booklist._id)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="booklist-content">
+                            <div class="booklist-meta">
+                                <div class="booklist-creator">
+                                    <i class="fas fa-user-circle"></i>{{ booklist.creator.nickname }}
+                                </div>
+                                <div class="booklist-date">
+                                    {{ booklist.year }}年{{ booklist.month }}月
+                                </div>
+                            </div>
+                            
+                            <h3 class="booklist-title">{{ booklist.title }}</h3>
+                            
+                            <div class="booklist-desc">
+                                {{ booklist.content.substring(0, 100) }}...
+                            </div>
+                            
+                            <div class="booklist-stats">
+                                <div class="booklist-comments">
+                                    <i class="fas fa-comment"></i>{{ booklist.commentCount || 0 }} 条评论
+                                </div>
+                                <div class="booklist-views">
+                                    <i class="fas fa-eye"></i>{{ booklist.viewCount || 0 }} 次浏览
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- 分页 -->
@@ -147,23 +1131,147 @@
             </section>
         </div>
 
-        <!-- 模态框组件 -->
-        <booklist-modal 
-            v-if="showModal"
-            :mode="modalMode"
-            :booklist="selectedBooklist"
-            @close="closeModal"
-            @save="saveBooklist"
-        />
+        <!-- 创建/编辑书单模态框 -->
+        <div v-if="showModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>{{ modalMode === 'create' ? '创建书单' : '编辑书单' }}</h2>
+                    <button class="modal-close" @click="closeModal">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">标题 *</label>
+                        <input type="text" v-model="formData.title" class="form-input" placeholder="请输入书单标题" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">科目 *</label>
+                        <select v-model="formData.subject" class="form-select" required>
+                            <option value="">请选择科目</option>
+                            <option value="语文">语文</option>
+                            <option value="数学">数学</option>
+                            <option value="英语">英语</option>
+                            <option value="道法">道法</option>
+                            <option value="物理">物理</option>
+                            <option value="化学">化学</option>
+                            <option value="生物">生物</option>
+                            <option value="历史">历史</option>
+                            <option value="政治">政治</option>
+                            <option value="地理">地理</option>
+                            <option value="科学">科学</option>
+                            <option value="课外阅读">课外阅读</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">年份 *</label>
+                            <select v-model="formData.year" class="form-select" required>
+                                <option v-for="year in [2020, 2021, 2022, 2023, 2024, 2025]" 
+                                        :value="year">{{ year }}年</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">月份 *</label>
+                            <select v-model="formData.month" class="form-select" required>
+                                <option v-for="month in [1,2,3,4,5,6,7,8,9,10,11,12]" 
+                                        :value="month">{{ month }}月</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">选择背景</label>
+                        <div class="bg-selector">
+                            <div v-for="(color, index) in bgColors" 
+                                 :key="index"
+                                 class="bg-option"
+                                 :class="{ selected: formData.bgIndex === index }"
+                                 :style="{ background: color }"
+                                 @click="formData.bgIndex = index">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">内容 *</label>
+                        <textarea v-model="formData.content" class="form-textarea" 
+                                  placeholder="请输入书单内容..." required rows="6"></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click="closeModal">取消</button>
+                    <button type="button" class="btn btn-primary" @click="saveBooklist">
+                        <i class="fas fa-save"></i>保存
+                    </button>
+                </div>
+            </div>
+        </div>
         
-        <booklist-detail-modal
-            v-if="showDetailModal"
-            :booklist="selectedBooklist"
-            :current-user="currentUser"
-            @close="closeDetailModal"
-            @add-comment="addComment"
-            @delete-comment="deleteComment"
-        />
+        <!-- 书单详情模态框 -->
+        <div v-if="showDetailModal" class="modal-overlay detail-modal">
+            <div class="modal">
+                <div class="modal-header booklist-detail-header" 
+                     :style="{ background: selectedBooklist.bgColor || '#4a90e2' }">
+                    <div class="detail-category">{{ selectedBooklist.subject }}</div>
+                    <h2 class="detail-title">{{ selectedBooklist.title }}</h2>
+                    <div class="detail-meta">
+                        <div class="detail-creator">
+                            <i class="fas fa-user"></i>
+                            <span>{{ selectedBooklist.creator.nickname }}</span>
+                        </div>
+                        <div class="detail-date">{{ selectedBooklist.year }}年{{ selectedBooklist.month }}月</div>
+                    </div>
+                </div>
+                
+                <div class="booklist-detail-content">
+                    <div class="detail-desc">{{ selectedBooklist.content }}</div>
+                    
+                    <div class="comments-section">
+                        <h3><i class="fas fa-comments"></i>评论 ({{ selectedBooklist.comments?.length || 0 }})</h3>
+                        
+                        <div class="comment-form">
+                            <textarea v-model="newComment" class="comment-input" 
+                                      placeholder="写下您的评论..."></textarea>
+                            <button @click="addComment" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>发表评论
+                            </button>
+                        </div>
+                        
+                        <div class="comments-list">
+                            <div v-if="!selectedBooklist.comments?.length" class="no-comments">
+                                <i class="fas fa-comment-slash"></i>
+                                <p>暂无评论，快来发表第一条评论吧！</p>
+                            </div>
+                            
+                            <div v-else class="comment-item" v-for="comment in selectedBooklist.comments" :key="comment._id">
+                                <div class="comment-header">
+                                    <div class="comment-user">
+                                        <i class="fas fa-user-circle"></i>{{ comment.user?.nickname }}
+                                    </div>
+                                    <div class="comment-time">
+                                        {{ new Date(comment.createdAt).toLocaleString() }}
+                                    </div>
+                                </div>
+                                <div class="comment-content">{{ comment.content }}</div>
+                                <div class="comment-actions" v-if="comment.user?._id === currentUser?.id">
+                                    <button class="reply-btn" @click="deleteComment(comment._id)">
+                                        <i class="fas fa-trash"></i>删除
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click="closeDetailModal">关闭</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Vue.js 和 Axios -->
@@ -171,8 +1279,8 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     
     <script>
-        // API基础URL
-        const API_BASE_URL = 'http://localhost:3000/api';
+        // API基础URL - 使用相对路径，避免跨域问题
+        const API_BASE_URL = window.location.origin + '/api';
         
         // 创建Vue应用
         const app = Vue.createApp({
@@ -224,6 +1332,27 @@
                     showDetailModal: false,
                     modalMode: 'create', // 'create' 或 'edit'
                     selectedBooklist: null,
+                    formData: {
+                        title: '',
+                        content: '',
+                        subject: '',
+                        year: new Date().getFullYear(),
+                        month: new Date().getMonth() + 1,
+                        bgIndex: 0
+                    },
+                    
+                    // 新评论
+                    newComment: '',
+                    
+                    // 背景颜色
+                    bgColors: [
+                        '#4a90e2', '#50c878', '#ff7f50', '#9370db', '#ff6b6b',
+                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
+                    ],
                     
                     // 视图模式
                     isMyBooklistsView: false
@@ -231,12 +1360,38 @@
             },
             
             mounted() {
+                console.log('应用已加载，当前URL:', window.location.origin);
                 this.checkAuth();
                 this.setupAxiosInterceptors();
+                
+                // 测试API连接
+                this.testAPIConnection();
             },
             
             methods: {
-                // 认证相关方法
+                async testAPIConnection() {
+                    try {
+                        const response = await axios.get(`${API_BASE_URL}/health`);
+                        console.log('API连接测试:', response.data);
+                    } catch (error) {
+                        console.error('API连接失败，请确保后端服务器正在运行:', error);
+                        this.showMessage('无法连接到服务器，请确保后端已启动', 'error');
+                    }
+                },
+                
+                showMessage(text, type = 'info') {
+                    // 创建消息元素
+                    const messageEl = document.createElement('div');
+                    messageEl.className = `message ${type}`;
+                    messageEl.textContent = text;
+                    document.body.appendChild(messageEl);
+                    
+                    // 3秒后移除
+                    setTimeout(() => {
+                        messageEl.remove();
+                    }, 3000);
+                },
+                
                 async checkAuth() {
                     const token = localStorage.getItem('token');
                     if (token) {
@@ -248,10 +1403,12 @@
                             if (response.data.success) {
                                 this.isAuthenticated = true;
                                 this.currentUser = response.data.data.user;
+                                this.showMainContent();
                                 this.loadBooklists();
                                 this.loadYearMonthFilters();
                             }
                         } catch (error) {
+                            console.error('认证检查失败:', error);
                             localStorage.removeItem('token');
                         }
                     }
@@ -264,6 +1421,8 @@
                             config.headers.Authorization = `Bearer ${token}`;
                         }
                         return config;
+                    }, error => {
+                        return Promise.reject(error);
                     });
                     
                     axios.interceptors.response.use(
@@ -271,10 +1430,21 @@
                         error => {
                             if (error.response?.status === 401) {
                                 this.logout();
+                                this.showMessage('登录已过期，请重新登录', 'error');
                             }
                             return Promise.reject(error);
                         }
                     );
+                },
+                
+                showMainContent() {
+                    const authContainer = document.querySelector('.auth-container');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (authContainer && mainContent) {
+                        authContainer.style.display = 'none';
+                        mainContent.style.display = 'block';
+                    }
                 },
                 
                 async login() {
@@ -287,11 +1457,13 @@
                             this.isAuthenticated = true;
                             this.currentUser = user;
                             this.loginData = { username: '', password: '' };
+                            this.showMainContent();
                             this.loadBooklists();
                             this.loadYearMonthFilters();
+                            this.showMessage('登录成功', 'success');
                         }
                     } catch (error) {
-                        alert(error.response?.data?.message || '登录失败');
+                        this.showMessage(error.response?.data?.message || '登录失败', 'error');
                     }
                 },
                 
@@ -300,12 +1472,12 @@
                         const response = await axios.post(`${API_BASE_URL}/auth/register`, this.registerData);
                         
                         if (response.data.success) {
-                            alert('注册成功！请登录');
+                            this.showMessage('注册成功！请登录', 'success');
                             this.showLoginForm = true;
                             this.registerData = { username: '', nickname: '', email: '', password: '' };
                         }
                     } catch (error) {
-                        alert(error.response?.data?.message || '注册失败');
+                        this.showMessage(error.response?.data?.message || '注册失败', 'error');
                     }
                 },
                 
@@ -315,6 +1487,16 @@
                     this.currentUser = null;
                     this.booklists = [];
                     this.showLoginForm = true;
+                    
+                    const authContainer = document.querySelector('.auth-container');
+                    const mainContent = document.querySelector('.main-content');
+                    
+                    if (authContainer && mainContent) {
+                        authContainer.style.display = 'flex';
+                        mainContent.style.display = 'none';
+                    }
+                    
+                    this.showMessage('已退出登录', 'info');
                 },
                 
                 toggleAuthForm() {
@@ -357,6 +1539,7 @@
                         }
                     } catch (error) {
                         console.error('加载书单失败:', error);
+                        this.showMessage('加载书单失败', 'error');
                     } finally {
                         this.loading = false;
                     }
@@ -379,6 +1562,7 @@
                 },
                 
                 changePage(page) {
+                    if (page < 1 || page > this.pagination.pages) return;
                     this.pagination.page = page;
                     this.loadBooklists();
                     window.scrollTo(0, 0);
@@ -397,48 +1581,84 @@
                 },
                 
                 showProfile() {
-                    alert('个人中心功能开发中...');
+                    this.showMessage('个人中心功能开发中...', 'info');
                 },
                 
                 // 模态框相关
                 openCreateModal() {
                     this.modalMode = 'create';
-                    this.selectedBooklist = null;
+                    this.formData = {
+                        title: '',
+                        content: '',
+                        subject: '',
+                        year: new Date().getFullYear(),
+                        month: new Date().getMonth() + 1,
+                        bgIndex: 0
+                    };
                     this.showModal = true;
                 },
                 
                 openEditModal(booklist) {
+                    event.stopPropagation();
                     this.modalMode = 'edit';
-                    this.selectedBooklist = { ...booklist };
+                    this.selectedBooklist = booklist;
+                    this.formData = {
+                        title: booklist.title,
+                        content: booklist.content,
+                        subject: booklist.subject,
+                        year: booklist.year,
+                        month: booklist.month,
+                        bgIndex: booklist.bgIndex
+                    };
                     this.showModal = true;
                 },
                 
-                openDetailModal(booklist) {
+                async openDetailModal(booklist) {
                     this.selectedBooklist = booklist;
+                    
+                    // 加载书单详情
+                    try {
+                        const response = await axios.get(`${API_BASE_URL}/booklists/${booklist._id}`);
+                        if (response.data.success) {
+                            this.selectedBooklist = response.data.data.booklist;
+                        }
+                    } catch (error) {
+                        console.error('加载书单详情失败:', error);
+                    }
+                    
                     this.showDetailModal = true;
                 },
                 
                 closeModal() {
                     this.showModal = false;
                     this.selectedBooklist = null;
+                    this.formData = {
+                        title: '',
+                        content: '',
+                        subject: '',
+                        year: new Date().getFullYear(),
+                        month: new Date().getMonth() + 1,
+                        bgIndex: 0
+                    };
                 },
                 
                 closeDetailModal() {
                     this.showDetailModal = false;
                     this.selectedBooklist = null;
+                    this.newComment = '';
                 },
                 
                 // 书单操作
-                async saveBooklist(booklistData) {
+                async saveBooklist() {
                     try {
                         let response;
                         
                         if (this.modalMode === 'create') {
-                            response = await axios.post(`${API_BASE_URL}/booklists`, booklistData);
+                            response = await axios.post(`${API_BASE_URL}/booklists`, this.formData);
                         } else {
                             response = await axios.put(
                                 `${API_BASE_URL}/booklists/${this.selectedBooklist._id}`, 
-                                booklistData
+                                this.formData
                             );
                         }
                         
@@ -446,324 +1666,87 @@
                             this.closeModal();
                             this.loadBooklists();
                             this.loadYearMonthFilters();
+                            this.showMessage(
+                                this.modalMode === 'create' ? '书单创建成功' : '书单更新成功', 
+                                'success'
+                            );
                         }
                     } catch (error) {
-                        alert(error.response?.data?.message || '保存失败');
+                        this.showMessage(error.response?.data?.message || '保存失败', 'error');
                     }
                 },
                 
                 async deleteBooklist(booklistId) {
-                    if (confirm('确定要删除这个书单吗？此操作无法撤销。')) {
-                        try {
-                            const response = await axios.delete(`${API_BASE_URL}/booklists/${booklistId}`);
-                            
-                            if (response.data.success) {
-                                this.loadBooklists();
-                                this.loadYearMonthFilters();
-                            }
-                        } catch (error) {
-                            alert(error.response?.data?.message || '删除失败');
+                    event.stopPropagation();
+                    
+                    if (!confirm('确定要删除这个书单吗？此操作无法撤销。')) {
+                        return;
+                    }
+                    
+                    try {
+                        const response = await axios.delete(`${API_BASE_URL}/booklists/${booklistId}`);
+                        
+                        if (response.data.success) {
+                            this.loadBooklists();
+                            this.loadYearMonthFilters();
+                            this.showMessage('书单删除成功', 'success');
                         }
+                    } catch (error) {
+                        this.showMessage(error.response?.data?.message || '删除失败', 'error');
                     }
                 },
                 
                 // 评论操作
-                async addComment(booklistId, content) {
+                async addComment() {
+                    if (!this.newComment.trim()) {
+                        this.showMessage('请输入评论内容', 'error');
+                        return;
+                    }
+                    
                     try {
                         const response = await axios.post(
-                            `${API_BASE_URL}/comments/booklist/${booklistId}`,
-                            { content }
+                            `${API_BASE_URL}/comments/booklist/${this.selectedBooklist._id}`,
+                            { content: this.newComment }
                         );
                         
                         if (response.data.success) {
                             // 重新加载书单详情
-                            const booklistResponse = await axios.get(`${API_BASE_URL}/booklists/${booklistId}`);
+                            const booklistResponse = await axios.get(`${API_BASE_URL}/booklists/${this.selectedBooklist._id}`);
                             if (booklistResponse.data.success) {
                                 this.selectedBooklist = booklistResponse.data.data.booklist;
                             }
+                            this.newComment = '';
+                            this.showMessage('评论发表成功', 'success');
                         }
                     } catch (error) {
-                        alert(error.response?.data?.message || '发表评论失败');
+                        this.showMessage(error.response?.data?.message || '发表评论失败', 'error');
                     }
                 },
                 
                 async deleteComment(commentId) {
-                    if (confirm('确定要删除这条评论吗？')) {
-                        try {
-                            const response = await axios.delete(`${API_BASE_URL}/comments/${commentId}`);
-                            
-                            if (response.data.success) {
-                                // 重新加载书单详情
-                                const booklistId = this.selectedBooklist._id;
-                                const booklistResponse = await axios.get(`${API_BASE_URL}/booklists/${booklistId}`);
-                                if (booklistResponse.data.success) {
-                                    this.selectedBooklist = booklistResponse.data.data.booklist;
-                                }
+                    event.stopPropagation();
+                    
+                    if (!confirm('确定要删除这条评论吗？')) {
+                        return;
+                    }
+                    
+                    try {
+                        const response = await axios.delete(`${API_BASE_URL}/comments/${commentId}`);
+                        
+                        if (response.data.success) {
+                            // 重新加载书单详情
+                            const booklistId = this.selectedBooklist._id;
+                            const booklistResponse = await axios.get(`${API_BASE_URL}/booklists/${booklistId}`);
+                            if (booklistResponse.data.success) {
+                                this.selectedBooklist = booklistResponse.data.data.booklist;
                             }
-                        } catch (error) {
-                            alert(error.response?.data?.message || '删除评论失败');
+                            this.showMessage('评论删除成功', 'success');
                         }
+                    } catch (error) {
+                        this.showMessage(error.response?.data?.message || '删除评论失败', 'error');
                     }
                 }
             }
-        });
-
-        // 书单卡片组件
-        app.component('booklist-card', {
-            props: ['booklist', 'currentUser'],
-            template: `
-                <div class="booklist-card" @click="$emit('view-detail', booklist)">
-                    <div class="booklist-bg" :style="{ background: booklist.bgColor || '#4a90e2' }">
-                        <div class="booklist-category">
-                            <i class="fas fa-tag"></i>{{ booklist.subject }}
-                        </div>
-                        <div class="booklist-actions" v-if="booklist.creator._id === currentUser?.id">
-                            <button class="action-btn edit-btn" @click.stop="$emit('edit', booklist)">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn delete-btn" @click.stop="$emit('delete', booklist._id)">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="booklist-content">
-                        <div class="booklist-meta">
-                            <div class="booklist-creator">
-                                <i class="fas fa-user-circle"></i>{{ booklist.creator.nickname }}
-                            </div>
-                            <div class="booklist-date">
-                                {{ booklist.year }}年{{ booklist.month }}月
-                            </div>
-                        </div>
-                        
-                        <h3 class="booklist-title">{{ booklist.title }}</h3>
-                        
-                        <div class="booklist-desc">
-                            {{ booklist.content.substring(0, 100) }}...
-                        </div>
-                        
-                        <div class="booklist-stats">
-                            <div class="booklist-comments">
-                                <i class="fas fa-comment"></i>{{ booklist.commentCount || 0 }} 条评论
-                            </div>
-                            <div class="booklist-views">
-                                <i class="fas fa-eye"></i>{{ booklist.viewCount || 0 }} 次浏览
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `
-        });
-
-        // 书单模态框组件
-        app.component('booklist-modal', {
-            props: ['mode', 'booklist'],
-            emits: ['close', 'save'],
-            data() {
-                return {
-                    formData: {
-                        title: '',
-                        content: '',
-                        subject: '',
-                        year: new Date().getFullYear(),
-                        month: new Date().getMonth() + 1,
-                        bgIndex: 0
-                    },
-                    bgColors: [
-                        '#4a90e2', '#50c878', '#ff7f50', '#9370db', '#ff6b6b',
-                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
-                    ]
-                };
-            },
-            mounted() {
-                if (this.mode === 'edit' && this.booklist) {
-                    this.formData = { ...this.booklist };
-                } else {
-                    // 设置当前年份和月份
-                    this.formData.year = new Date().getFullYear();
-                    this.formData.month = new Date().getMonth() + 1;
-                }
-            },
-            methods: {
-                save() {
-                    this.$emit('save', this.formData);
-                },
-                close() {
-                    this.$emit('close');
-                }
-            },
-            template: `
-                <div class="modal-overlay">
-                    <div class="modal">
-                        <div class="modal-header">
-                            <h2>{{ mode === 'create' ? '创建书单' : '编辑书单' }}</h2>
-                            <button class="modal-close" @click="close">&times;</button>
-                        </div>
-                        
-                        <div class="modal-body">
-                            <div class="form-group">
-                                <label class="form-label">标题 *</label>
-                                <input type="text" v-model="formData.title" class="form-input" placeholder="请输入书单标题" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">科目 *</label>
-                                <select v-model="formData.subject" class="form-select" required>
-                                    <option value="">请选择科目</option>
-                                    <option value="语文">语文</option>
-                                    <option value="数学">数学</option>
-                                    <option value="英语">英语</option>
-                                    <option value="道法">道法</option>
-                                    <option value="物理">物理</option>
-                                    <option value="化学">化学</option>
-                                    <option value="生物">生物</option>
-                                    <option value="历史">历史</option>
-                                    <option value="政治">政治</option>
-                                    <option value="地理">地理</option>
-                                    <option value="科学">科学</option>
-                                    <option value="课外阅读">课外阅读</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">年份 *</label>
-                                    <select v-model="formData.year" class="form-select" required>
-                                        <option v-for="year in [2020, 2021, 2022, 2023, 2024, 2025]" 
-                                                :value="year">{{ year }}年</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label class="form-label">月份 *</label>
-                                    <select v-model="formData.month" class="form-select" required>
-                                        <option v-for="month in [1,2,3,4,5,6,7,8,9,10,11,12]" 
-                                                :value="month">{{ month }}月</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">选择背景</label>
-                                <div class="bg-selector">
-                                    <div v-for="(color, index) in bgColors" 
-                                         :key="index"
-                                         class="bg-option"
-                                         :class="{ selected: formData.bgIndex === index }"
-                                         :style="{ background: color }"
-                                         @click="formData.bgIndex = index">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">内容 *</label>
-                                <textarea v-model="formData.content" class="form-textarea" 
-                                          placeholder="请输入书单内容..." required rows="6"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @click="close">取消</button>
-                            <button type="button" class="btn btn-primary" @click="save">
-                                <i class="fas fa-save"></i>保存
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `
-        });
-
-        // 书单详情模态框组件
-        app.component('booklist-detail-modal', {
-            props: ['booklist', 'currentUser'],
-            emits: ['close', 'add-comment', 'delete-comment'],
-            data() {
-                return {
-                    newComment: ''
-                };
-            },
-            methods: {
-                addComment() {
-                    if (this.newComment.trim()) {
-                        this.$emit('add-comment', this.booklist._id, this.newComment);
-                        this.newComment = '';
-                    }
-                },
-                deleteComment(commentId) {
-                    this.$emit('delete-comment', commentId);
-                },
-                close() {
-                    this.$emit('close');
-                }
-            },
-            template: `
-                <div class="modal-overlay detail-modal">
-                    <div class="modal">
-                        <div class="modal-header booklist-detail-header" 
-                             :style="{ background: booklist.bgColor || '#4a90e2' }">
-                            <div class="detail-category">{{ booklist.subject }}</div>
-                            <h2 class="detail-title">{{ booklist.title }}</h2>
-                            <div class="detail-meta">
-                                <div class="detail-creator">
-                                    <i class="fas fa-user"></i>
-                                    <span>{{ booklist.creator.nickname }}</span>
-                                </div>
-                                <div class="detail-date">{{ booklist.year }}年{{ booklist.month }}月</div>
-                            </div>
-                        </div>
-                        
-                        <div class="booklist-detail-content">
-                            <div class="detail-desc">{{ booklist.content }}</div>
-                            
-                            <div class="comments-section">
-                                <h3><i class="fas fa-comments"></i>评论 ({{ booklist.comments?.length || 0 }})</h3>
-                                
-                                <div class="comment-form">
-                                    <textarea v-model="newComment" class="comment-input" 
-                                              placeholder="写下您的评论..."></textarea>
-                                    <button @click="addComment" class="btn btn-primary">
-                                        <i class="fas fa-paper-plane"></i>发表评论
-                                    </button>
-                                </div>
-                                
-                                <div class="comments-list">
-                                    <div v-if="!booklist.comments?.length" class="no-comments">
-                                        <i class="fas fa-comment-slash"></i>
-                                        <p>暂无评论，快来发表第一条评论吧！</p>
-                                    </div>
-                                    
-                                    <div v-else class="comment-item" v-for="comment in booklist.comments" :key="comment._id">
-                                        <div class="comment-header">
-                                            <div class="comment-user">
-                                                <i class="fas fa-user-circle"></i>{{ comment.user?.nickname }}
-                                            </div>
-                                            <div class="comment-time">
-                                                {{ new Date(comment.createdAt).toLocaleString() }}
-                                            </div>
-                                        </div>
-                                        <div class="comment-content">{{ comment.content }}</div>
-                                        <div class="comment-actions" v-if="comment.user?._id === currentUser?.id">
-                                            <button class="reply-btn" @click="deleteComment(comment._id)">
-                                                <i class="fas fa-trash"></i>删除
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @click="close">关闭</button>
-                        </div>
-                    </div>
-                </div>
-            `
         });
 
         // 挂载应用
